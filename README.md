@@ -1,7 +1,7 @@
-# lorenz63-4dvar
-The 4DVar data assimilation technique implemented with the Lorenz '63 model
+# lorenz96-4dvar
+The 4DVar data assimilation technique implemented with the Lorenz '96 model
 
-This repository contains an implementation of the 4DVar technique with the Lorenz '63 model. The code is intended to be a simple introduction to this technique, and includes both the "plain" formulation of the 4DVar technique, as well as the incremental form (in the "incremental" branch).
+This repository contains an implementation of the 4DVar technique with the Lorenz '96 model. The code is intended to be a simple introduction to this technique, and includes both the "plain" formulation of the 4DVar technique, as well as the incremental form (in the "incremental" branch).
 
 Minimisation is currently performed with a very simple gradient descent method. In the future I would like to implement a conjugate gradient technique.
 
