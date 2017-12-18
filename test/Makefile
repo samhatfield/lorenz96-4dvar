@@ -11,6 +11,7 @@ test: test.o ../utils.o ../params.o ../lorenz96.o ../assim.o
 
 # Dependencies
 test.o: ../utils.o ../params.o ../lorenz96.o ../assim.o
+../utils.o: ../params.o
 
 # Build rules
 %.o: %.f90
