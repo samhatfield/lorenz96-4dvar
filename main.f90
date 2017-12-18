@@ -4,20 +4,20 @@
 !> An observing system simulation experiment (OSSE) using the Lorenz '63 model
 !> and 4DVar.
 !> Based on code by Amos Lawless, University of Reading.
-program lorenz63_4dvar
+program lorenz96_4dvar
     use params
-    use lorenz63, only: run_model
+    use lorenz96, only: run_model
     use utils, only: time_seed, randn
     use io, only: output
     use assim, only: calc_cost, calc_cost_grad
 
     implicit none
 
-    real(dp), dimension(tstep,3) :: truth = 0.0_dp
-    real(dp), dimension(tstep,3) :: best_guess
-    real(dp) :: obs(tstep/freq,3)
+    real(dp), dimension(tstep,n_x) :: truth = 0.0_dp
+    real(dp), dimension(tstep,n_x) :: best_guess
+    real(dp) :: obs(tstep/freq,n_x)
     real(dp) :: diagn(max_iterations,1)
-    real(dp) :: l(3), f, norm, initial(3)
+    real(dp) :: l(n_x), f, norm, initial(n_x)
     real(dp) :: time(tstep)
     integer :: i, j = 1
 
@@ -33,16 +33,14 @@ program lorenz63_4dvar
     time = (/ (real(i)*h, i = 0, tstep-1) /)
 
     ! Run truth
-    truth = run_model(tstep, (/ 1.0_dp, 1.0_dp, 1.0_dp /))
+    truth = run_model(tstep, (/ (randn(1.0_dp, 0.1_dp), i = 1, n_x) /))
 
     ! Calculate observations
     do i = 1, tstep, freq
         last = i
-        obs(1+i/freq,:) = (/&
-        & randn(truth(i,1), sqrt(obs_var)), &
-        & randn(truth(i,2), sqrt(obs_var)), &
-        & randn(truth(i,3), sqrt(obs_var)) &
-        & /)
+        do j = 1, n_x
+            obs(1+i/freq,j) = randn(truth(i,j), sqrt(obs_var))
+        end do
     end do
 
     ! Output truth and observations
@@ -50,7 +48,7 @@ program lorenz63_4dvar
     call output(time, obs, "obs.txt", freq)
 
     ! Set initial best guess
-    initial = (/ 8.0_dp, 8.0_dp, 8.0_dp /)
+    initial = (/ (randn(1.0_dp, 5.0_dp), i = 1, n_x) /)
 
     ! Perform minimisation
     do j = 1, max_iterations
@@ -81,4 +79,4 @@ program lorenz63_4dvar
 
     ! Output diagnostics
     call output((/ (real(i,dp), i = 1, max_iterations) /), diagn, "diagnostics.txt")
-end program lorenz63_4dvar
+end program lorenz96_4dvar

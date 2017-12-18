@@ -1,7 +1,8 @@
 program test
     use params
-    use lorenz63, only: run_model, run_tangent_linear, run_adjoint
+    use lorenz96, only: run_model, run_tangent_linear, run_adjoint
     use assim, only: calc_cost, calc_cost_grad
+    use utils, only: randn
 
     implicit none
 
@@ -12,10 +13,10 @@ program test
 contains
     subroutine test_tl
         integer, parameter :: nsteps = 100
-        real(dp), dimension(3) :: pert_orig, orig_state, pert, pert_state, diff
-        real(dp), dimension(nsteps,3) :: orig_traj, pert_traj, pert_traj_tl
+        real(dp), dimension(n_x) :: pert_orig, orig_state, pert, pert_state, diff
+        real(dp), dimension(nsteps,n_x) :: orig_traj, pert_traj, pert_traj_tl
         real(dp) :: rel_err
-        real(dp) :: gamma = 1000_dp
+        real(dp) :: gamma = 100_dp
         integer :: i
 
         print *, '============================================================'
@@ -25,13 +26,13 @@ contains
         print *, 'of the perturbation decreases.'
         print *, '============================================================'
 
-        pert_orig = (/ 1.0_dp, -1.0_dp, 0.5_dp /)
+        pert_orig = (/ ( randn(0.0_dp, 1.0_dp), i = 1, n_x ) /)
 
         write (*, '(A10, A16)') 'Magnitude', 'Relative error'
         do i = 1, 9
             gamma = gamma * 0.1_dp
 
-            orig_state = (/ 1.0_dp, 2.0_dp, 1.5_dp /)
+            orig_state = (/ (1.0_dp, i = 1, n_x) /)
             pert = gamma * pert_orig
             pert_state = orig_state + pert
 
@@ -50,9 +51,10 @@ contains
 
     subroutine test_adj
         integer, parameter :: nsteps = 10
-        real(dp), dimension(3) :: pert, initial_hat
-        real(dp), dimension(nsteps,3) :: traj, pert_traj
+        real(dp), dimension(n_x) :: pert, initial_hat
+        real(dp), dimension(nsteps,n_x) :: traj, pert_traj
         real(dp) :: forward_product, adjoint_product
+        integer :: i
 
         print *, ''
         print *, '============================================================'
@@ -68,7 +70,7 @@ contains
         ! Generate random unit vector
         call random_number(pert)
 
-        traj = run_model(nsteps, (/ 1.0_dp, 2.0_dp, 1.5_dp /))
+        traj = run_model(nsteps, (/ (1.0_dp, i = 1, n_x) /))
         pert_traj = run_tangent_linear(nsteps, traj, pert)
         initial_hat = run_adjoint(nsteps, traj, pert_traj(nsteps,:))
 
@@ -82,13 +84,13 @@ contains
 
     subroutine test_grad
         integer, parameter :: n_samples = 12
-        real(dp), dimension(3) :: initial, grad1, grad2, rand_unit
-        real(dp) :: grad1_norm(3), alpha = 1.0_dp, obs(tstep/freq,3), cost1, cost2
-        real(dp) :: traj(tstep,3)
+        real(dp), dimension(n_x) :: initial, grad1, grad2, rand_unit
+        real(dp) :: grad1_norm(n_x), alpha = 1.0_dp, obs(tstep/freq,n_x), cost1, cost2
+        real(dp) :: traj(tstep,n_x)
         real(dp) :: alpha_store(n_samples)
         integer :: i
 
-        initial = (/ 1.0_dp, 2.0_dp, 5.0_dp /)
+        initial = (/ ( randn(0.0_dp, 1.0_dp), i = 1, n_x ) /)
 
         traj = run_model(tstep, initial)
 

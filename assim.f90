@@ -4,7 +4,7 @@
 !> Contains function for performing the 4DVar data assimilation technique.
 module assim
     use params
-    use lorenz63, only: run_adjoint
+    use lorenz96, only: run_adjoint
 
     implicit none
 
@@ -21,7 +21,7 @@ contains
     !> @return J the cost function
     function calc_cost(tstep, traj, obs) result(J)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: traj(tstep,3), obs(tstep/freq,3)
+        real(dp), intent(in) :: traj(tstep,n_x), obs(tstep/freq,n_x)
         real(dp) :: J
         integer :: i
 
@@ -42,8 +42,8 @@ contains
     !> initial perturbation
     function calc_cost_grad(tstep, traj, obs) result(hat)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: traj(tstep,3), obs(tstep/freq,3)
-        real(dp) :: hat(3)
+        real(dp), intent(in) :: traj(tstep,n_x), obs(tstep/freq,n_x)
+        real(dp) :: hat(n_x)
         integer :: i
 
         ! Calculate first normalised innovation
