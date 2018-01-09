@@ -16,10 +16,20 @@ program lorenz96_4dvar
     real(dp), dimension(tstep,n_x) :: truth = 0.0_dp
     real(dp), dimension(tstep,n_x) :: best_guess
     real(dp) :: obs(tstep/freq,n_x)
-    real(dp) :: diagn(max_iterations,1)
-    real(dp) :: l(n_x), f, norm, initial(n_x)
+    real(dp) :: cost, diagn(max_iterations,1)
+    real(dp) :: grad(n_x), f, norm, initial(n_x)
     real(dp) :: time(tstep)
-    integer :: i, j = 1
+    integer :: i, j, iters
+
+    ! Dummy variables for gradient descent algorithm
+    real(dp) :: d(n_x), grad_old(n_x), w(n_x)
+
+    ! Flags to control gradient descent algorithm behaviour
+    integer :: printflags(2) = (/ -1, 2 /), flag = 0, rest = 0, method = 3
+
+    ! Variables required by gradient descent subroutine call, but that aren't actually used
+    real(dp) :: eps = 1.0d-5
+    logical :: finish = .false.
 
     ! Check whether observation frequency divides into total number of timsteps
     if (mod(tstep, freq) /= 0) then
@@ -48,30 +58,29 @@ program lorenz96_4dvar
     call output(time, obs, "obs.txt", freq)
 
     ! Set initial best guess
-    initial = (/ (randn(1.0_dp, 5.0_dp), i = 1, n_x) /)
+    initial = (/ (randn(1.0_dp, 1.0_dp), i = 1, n_x) /)
 
     ! Perform minimisation
-    do j = 1, max_iterations
+    iters = 1
+    do
         ! Compute cost of current best guess
         best_guess = run_model(tstep, initial)
-        diagn(j,1) = calc_cost(tstep, best_guess, obs)
+        cost = calc_cost(tstep, best_guess, obs)
+        diagn(iters,1) = cost
 
         ! Output first guess
-        if (j == 1) then
+        if (iters == 1) then
             call output(time, best_guess, "first_guess.txt")
         end if
 
         ! Compute gradient of cost function
-        l = calc_cost_grad(tstep, best_guess, obs)
+        grad = calc_cost_grad(tstep, best_guess, obs)
 
-        ! Compute norm of cost function gradient
-        norm = sqrt(sum(l**2))
+        ! Use gradient descent algorithm to step towards minimum of cost function
+        call cgfam(n_x, initial, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
+        if (flag <= 0 .or. iters > max_iterations) exit
 
-        ! Normalise gradient vector
-        l = l/norm
-
-        ! Update initial state estimate at beginning of window
-        initial = initial - 0.5_dp*l
+        iters = iters + 1
     end do
 
     ! Output final best guess

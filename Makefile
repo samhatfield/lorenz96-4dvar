@@ -2,7 +2,7 @@
 FC = gfortran
 
 # Main target: main executable
-main: main.o params.o lorenz96.o utils.o io.o assim.o
+main: main.o params.o lorenz96.o utils.o io.o assim.o cg_plus.f
 	$(FC) -o $@ $^
 
 # Dependencies

@@ -17,11 +17,11 @@ module params
     integer, parameter :: n_x = 40
 
     real(dp), parameter :: h = 0.01_dp
-    real(dp), parameter :: wind_len = 0.6_dp
+    real(dp), parameter :: wind_len = 1.2_dp
     integer, parameter :: tstep = wind_len/h
-    integer, parameter :: freq = 6
+    integer, parameter :: freq = 10
     integer, parameter :: n_obs = (tstep - 1) / freq + 1
-    real(dp), parameter :: obs_var = 0.5_dp
-    integer, parameter :: max_iterations = 1000
+    real(dp), parameter :: obs_var = 2.0_dp
+    integer, parameter :: max_iterations = 3000
     integer :: last
 end module params
