@@ -12,7 +12,7 @@ module lorenz96
     public run_model, run_tangent_linear, run_adjoint
 
     ! Model parameters
-    real(dp) :: F = 20.0_dp
+    real(ap) :: F = 20.0_ap
 
 contains
     !> @brief
@@ -20,8 +20,8 @@ contains
     !> @param[in] x the state vector at which to evaluate the ODE
     !> @return dRdT the evaluated ODE
     function dRdT(x)
-        real(dp), intent(in) :: x(n_x)
-        real(dp) :: dRdT(n_x)
+        real(ap), intent(in) :: x(n_x)
+        real(ap) :: dRdT(n_x)
 
         dRdT = (cshift(x, 1) - cshift(x, -2))*cshift(x, -1) - x + F
     end function dRdT
@@ -33,8 +33,8 @@ contains
     !> @return jacob the evaluated Jacobian multiplied by the given
     !> perturbation
     function jacob(x, dx)
-        real(dp), intent(in) :: x(n_x), dx(n_x)
-        real(dp) :: jacob(n_x)
+        real(ap), intent(in) :: x(n_x), dx(n_x)
+        real(ap) :: jacob(n_x)
 
         jacob = (cshift(x, 1) - cshift(x, -2))*cshift(dx, -1) &
             & + (cshift(dx, 1) - cshift(dx, -2))*cshift(x, -1) - dx
@@ -49,8 +49,8 @@ contains
     !> @return jacob the evaluated adjoint of the Jacobian multiplied by the
     !> given perturbation
     function jacob_a(x, dx_a)
-        real(dp), intent(in) :: x(n_x), dx_a(n_x)
-        real(dp) :: jacob_a(n_x)
+        real(ap), intent(in) :: x(n_x), dx_a(n_x)
+        real(ap) :: jacob_a(n_x)
 
         jacob_a = (cshift(x, 2) - cshift(x, -1))*cshift(dx_a, 1) &
             & - cshift(x, 1)*cshift(dx_a, 2) + cshift(x, -2)*cshift(dx_a, -1) - dx_a
@@ -63,9 +63,9 @@ contains
     !> @return out the computed trajectory
     function run_model(tstep, in_array) result(out_array)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: in_array(n_x)
-        real(dp), dimension(n_x, tstep) :: out_array
-        real(dp), dimension(n_x) :: k1, k2, k3, k4
+        real(ap), intent(in) :: in_array(n_x)
+        real(ap), dimension(n_x, tstep) :: out_array
+        real(ap), dimension(n_x) :: k1, k2, k3, k4
         integer :: i
 
         ! First step
@@ -73,11 +73,11 @@ contains
 
         do i = 1, tstep-1
             k1 = h*dRdT(out_array(:,i))
-            k2 = h*dRdT(out_array(:,i) + 0.5_dp*k1)
-            k3 = h*dRdT(out_array(:,i) + 0.5_dp*k2)
+            k2 = h*dRdT(out_array(:,i) + 0.5_ap*k1)
+            k3 = h*dRdT(out_array(:,i) + 0.5_ap*k2)
             k4 = h*dRdT(out_array(:,i) + k3)
 
-            out_array(:,i+1) = out_array(:,i) + (k1 + 2.0_dp*k2 + 2.0_dp*k3 + k4)/6.0_dp
+            out_array(:,i+1) = out_array(:,i) + (k1 + 2.0_ap*k2 + 2.0_ap*k3 + k4)/6.0_ap
         end do
     end function run_model
 
@@ -89,9 +89,9 @@ contains
     !> @return dout the computed trajectory
     function run_tangent_linear(tstep, in_array, din) result(dout)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: in_array(n_x, tstep), din(n_x)
-        real(dp) :: dout(n_x,tstep)
-        real(dp), dimension(n_x) :: k1, k2, k3, dk1, dk2, dk3, dk4
+        real(ap), intent(in) :: in_array(n_x, tstep), din(n_x)
+        real(ap) :: dout(n_x,tstep)
+        real(ap), dimension(n_x) :: k1, k2, k3, dk1, dk2, dk3, dk4
         integer :: i
 
         ! First step
@@ -99,14 +99,14 @@ contains
 
         do i = 1, tstep-1
             k1 = h*dRdT(in_array(:,i))
-            k2 = h*dRdT(in_array(:,i) + 0.5_dp*k1)
-            k3 = h*dRdT(in_array(:,i) + 0.5_dp*k2)
+            k2 = h*dRdT(in_array(:,i) + 0.5_ap*k1)
+            k3 = h*dRdT(in_array(:,i) + 0.5_ap*k2)
             dk1 = h*jacob(in_array(:,i), dout(:,i))
-            dk2 = h*jacob(in_array(:,i) + 0.5_dp*k1, dout(:,i) + 0.5_dp*dk1)
-            dk3 = h*jacob(in_array(:,i) + 0.5_dp*k2, dout(:,i) + 0.5_dp*dk2)
+            dk2 = h*jacob(in_array(:,i) + 0.5_ap*k1, dout(:,i) + 0.5_ap*dk1)
+            dk3 = h*jacob(in_array(:,i) + 0.5_ap*k2, dout(:,i) + 0.5_ap*dk2)
             dk4 = h*jacob(in_array(:,i) + k3, dout(:,i) + dk3)
 
-            dout(:,i+1) = dout(:,i) + (dk1 + 2.0_dp*dk2 + 2.0_dp*dk3 + dk4)/6.0_dp
+            dout(:,i+1) = dout(:,i) + (dk1 + 2.0_ap*dk2 + 2.0_ap*dk3 + dk4)/6.0_ap
         end do
     end function run_tangent_linear
 
@@ -118,9 +118,9 @@ contains
     !> @return dout_a the computed trajectory
     function run_adjoint(tstep, in_array, din_a) result(dout_a)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: in_array(:,:), din_a(n_x)
-        real(dp) :: dout_a(n_x)
-        real(dp), dimension(n_x) :: k1, k2, k3, dk1_a, dk2_a, dk3_a, dk4_a
+        real(ap), intent(in) :: in_array(:,:), din_a(n_x)
+        real(ap) :: dout_a(n_x)
+        real(ap), dimension(n_x) :: k1, k2, k3, dk1_a, dk2_a, dk3_a, dk4_a
         integer :: i
 
         ! First step
@@ -128,14 +128,14 @@ contains
 
         do i = tstep-1, 1, -1
             k1 = h*dRdT(in_array(:,i))
-            k2 = h*dRdT(in_array(:,i) + 0.5_dp*k1)
-            k3 = h*dRdT(in_array(:,i) + 0.5_dp*k2)
+            k2 = h*dRdT(in_array(:,i) + 0.5_ap*k1)
+            k3 = h*dRdT(in_array(:,i) + 0.5_ap*k2)
             dk1_a = h*jacob_a(in_array(:,i) + k3, dout_a)
-            dk2_a = h*jacob_a(in_array(:,i) + 0.5_dp*k2, dout_a + 0.5_dp*dk1_a)
-            dk3_a = h*jacob_a(in_array(:,i) + 0.5_dp*k1, dout_a + 0.5_dp*dk2_a)
+            dk2_a = h*jacob_a(in_array(:,i) + 0.5_ap*k2, dout_a + 0.5_ap*dk1_a)
+            dk3_a = h*jacob_a(in_array(:,i) + 0.5_ap*k1, dout_a + 0.5_ap*dk2_a)
             dk4_a = h*jacob_a(in_array(:,i), dout_a + dk3_a)
 
-            dout_a = dout_a + (dk1_a + 2.0_dp*dk2_a + 2.0_dp*dk3_a + dk4_a)/6.0_dp
+            dout_a = dout_a + (dk1_a + 2.0_ap*dk2_a + 2.0_ap*dk3_a + dk4_a)/6.0_ap
         end do
     end function run_adjoint
 end module lorenz96

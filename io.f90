@@ -19,7 +19,7 @@ contains
     !> @param[in] stride_in an optional argument allowing only every nth value
     !> to be output
     subroutine output(time_axis, output_array, filename, stride_in)
-        real(dp), intent(in) :: time_axis(:), output_array(:,:)
+        real(ap), intent(in) :: time_axis(:), output_array(:,:)
         character(len=*), intent(in) :: filename
         integer, optional :: stride_in
         integer :: i, stride

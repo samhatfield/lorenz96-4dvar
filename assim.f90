@@ -21,12 +21,12 @@ contains
     !> @return J the cost function
     function calc_cost(tstep, traj, obs) result(J)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: traj(n_x,tstep), obs(n_x,tstep/freq)
-        real(dp) :: J
+        real(ap), intent(in) :: traj(n_x,tstep), obs(n_x,tstep/freq)
+        real(ap) :: J
         integer :: i
 
         ! Calculate cost function
-        J = 0.0_dp
+        J = 0.0_ap
         do i = 1, tstep, freq
             J = J + 0.5 * sum((traj(:,i) - obs(:,1+i/freq))**2)/obs_var
         end do
@@ -42,8 +42,8 @@ contains
     !> initial perturbation
     function calc_cost_grad(tstep, traj, obs) result(hat)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: traj(n_x,tstep), obs(n_x,tstep/freq)
-        real(dp) :: hat(n_x)
+        real(ap), intent(in) :: traj(n_x,tstep), obs(n_x,tstep/freq)
+        real(ap) :: hat(n_x)
         integer :: i
 
         ! Calculate first normalised innovation
