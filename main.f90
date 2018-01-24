@@ -13,10 +13,10 @@ program lorenz96_4dvar
 
     implicit none
 
-    real(dp), dimension(tstep,n_x) :: truth = 0.0_dp
-    real(dp), dimension(tstep,n_x) :: best_guess
-    real(dp) :: obs(tstep/freq,n_x)
-    real(dp) :: cost, diagn(max_iterations,1)
+    real(dp), dimension(n_x,tstep) :: truth = 0.0_dp
+    real(dp), dimension(n_x,tstep) :: best_guess
+    real(dp) :: obs(n_x,tstep/freq)
+    real(dp) :: cost, diagn(1,max_iterations)
     real(dp) :: grad(n_x), f, norm, initial(n_x)
     real(dp) :: time(tstep)
     integer :: i, j, iters
@@ -43,19 +43,19 @@ program lorenz96_4dvar
     time = (/ (real(i)*h, i = 0, tstep-1) /)
 
     ! Spin up truth
-    truth(1,:) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
+    truth(:,1) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
     do i = 1, spin_up
-        truth(:1,:) = run_model(1, truth(1,:))
+        truth(:,:1) = run_model(1, truth(:,1))
     end do
 
     ! Run truth
-    truth = run_model(tstep, truth(1,:))
+    truth = run_model(tstep, truth(:,1))
 
     ! Calculate observations
     do i = 1, tstep, freq
         last = i
         do j = 1, n_x
-            obs(1+i/freq,j) = randn(truth(i,j), sqrt(obs_var))
+            obs(j, 1+i/freq) = randn(truth(j,i), sqrt(obs_var))
         end do
     end do
 
@@ -64,16 +64,16 @@ program lorenz96_4dvar
     call output(time, obs, "obs.txt", freq)
 
     ! Set initial best guess
-    initial = (/ (truth(1,i) + randn(0.0_dp, 1.0_dp), i = 1, n_x ) /)
+    initial = (/ (truth(i,1) + randn(0.0_dp, 1.0_dp), i = 1, n_x ) /)
 
     ! Perform minimisation
-    iters = 0
+    iters = 1
     do
         ! Compute cost of current best guess
         if (flag == 0 .or. flag == 1) then
             best_guess = run_model(tstep, initial)
             cost = calc_cost(tstep, best_guess, obs)
-            diagn(iters,1) = cost
+            diagn(1,iters) = cost
     
             ! Output first guess
             if (iters == 0) then
@@ -86,7 +86,7 @@ program lorenz96_4dvar
 
         ! Use gradient descent algorithm to step towards minimum of cost function
         call cgfam(n_x, initial, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
-        if (flag <= 0 .or. iters > max_iterations) exit
+        if (flag <= 0 .or. iters >= max_iterations) exit
         if (flag == 1) iters = iters + 1
         if (flag == 2) then
             if (cost < 0.2_dp * n_obs * obs_var * n_x) then
@@ -96,7 +96,7 @@ program lorenz96_4dvar
     end do
 
     write (*,'(A5,I5,A11)') 'Took ', iters, ' iterations'
-    write (*,'(A11,F7.2)') 'Final cost ', cost
+    write (*,'(A11,F9.2)') 'Final cost ', cost
 
     ! Output final best guess
     call output(time, best_guess, "final_guess.txt")

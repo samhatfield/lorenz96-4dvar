@@ -21,14 +21,14 @@ contains
     !> @return J the cost function
     function calc_cost(tstep, traj, obs) result(J)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: traj(tstep,n_x), obs(tstep/freq,n_x)
+        real(dp), intent(in) :: traj(n_x,tstep), obs(n_x,tstep/freq)
         real(dp) :: J
         integer :: i
 
         ! Calculate cost function
         J = 0.0_dp
         do i = 1, tstep, freq
-            J = J + 0.5 * sum((traj(i,:) - obs(1+i/freq,:))**2)/obs_var
+            J = J + 0.5 * sum((traj(:,i) - obs(:,1+i/freq))**2)/obs_var
         end do
     end function calc_cost
 
@@ -42,18 +42,18 @@ contains
     !> initial perturbation
     function calc_cost_grad(tstep, traj, obs) result(hat)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: traj(tstep,n_x), obs(tstep/freq,n_x)
+        real(dp), intent(in) :: traj(n_x,tstep), obs(n_x,tstep/freq)
         real(dp) :: hat(n_x)
         integer :: i
 
         ! Calculate first normalised innovation
-        hat = (traj(last,:) - obs(1+last/freq,:))/obs_var
+        hat = (traj(:,last) - obs(:,1+last/freq))/obs_var
 
         ! Step backwards through time, summing each normalised innovation
         ! while using the adjoint model to evolve them backwards at each step
         do i = last-freq, 1, -freq
-            hat = run_adjoint(freq+1, traj(i:i+freq,:), hat) &
-                & + (traj(i,:) - obs(1+i/freq,:))/obs_var
+            hat = run_adjoint(freq+1, traj(:,i:i+freq), hat) &
+                & + (traj(:,i) - obs(:,1+i/freq))/obs_var
         end do
     end function calc_cost_grad
 end module assim

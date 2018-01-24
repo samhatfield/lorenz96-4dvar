@@ -31,8 +31,8 @@ contains
         end if
 
         open(1, file=filename)
-        do i = 1, size(output_array, 1)
-            write (1,*) time_axis(1+(i-1)*stride), output_array(i,:)
+        do i = 1, size(output_array, 2)
+            write (1,*) time_axis(1+(i-1)*stride), output_array(:,i)
         end do
         close(1)
     end subroutine output
