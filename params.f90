@@ -18,6 +18,7 @@ module params
 
     real(dp), parameter :: h = 0.01_dp
     real(dp), parameter :: wind_len = 1.2_dp
+    integer, parameter :: spin_up = 5000
     integer, parameter :: tstep = wind_len/h
     integer, parameter :: freq = 10
     integer, parameter :: n_obs = (tstep - 1) / freq + 1

@@ -42,8 +42,14 @@ program lorenz96_4dvar
     ! Generate time axis
     time = (/ (real(i)*h, i = 0, tstep-1) /)
 
+    ! Spin up truth
+    truth(1,:) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
+    do i = 1, spin_up
+        truth(:1,:) = run_model(1, truth(1,:))
+    end do
+
     ! Run truth
-    truth = run_model(tstep, (/ (randn(1.0_dp, 0.1_dp), i = 1, n_x) /))
+    truth = run_model(tstep, truth(1,:))
 
     ! Calculate observations
     do i = 1, tstep, freq
