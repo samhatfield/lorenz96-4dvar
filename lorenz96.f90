@@ -61,23 +61,23 @@ contains
     !> @param[in] tstep the length of the integration
     !> @param[in] in the initial condition
     !> @return out the computed trajectory
-    function run_model(tstep, in) result(out)
+    function run_model(tstep, in_array) result(out_array)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: in(n_x)
-        real(dp), dimension(tstep, n_x) :: out
+        real(dp), intent(in) :: in_array(n_x)
+        real(dp), dimension(tstep, n_x) :: out_array
         real(dp), dimension(n_x) :: k1, k2, k3, k4
         integer :: i
 
         ! First step
-        out(1,:) = in
+        out_array(1,:) = in_array
 
         do i = 1, tstep-1
-            k1 = h*dRdT(out(i,:))
-            k2 = h*dRdT(out(i,:) + 0.5_dp*k1)
-            k3 = h*dRdT(out(i,:) + 0.5_dp*k2)
-            k4 = h*dRdT(out(i,:) + k3)
+            k1 = h*dRdT(out_array(i,:))
+            k2 = h*dRdT(out_array(i,:) + 0.5_dp*k1)
+            k3 = h*dRdT(out_array(i,:) + 0.5_dp*k2)
+            k4 = h*dRdT(out_array(i,:) + k3)
 
-            out(i+1,:) = out(i,:) + (k1 + 2.0_dp*k2 + 2.0_dp*k3 + k4)/6.0_dp
+            out_array(i+1,:) = out_array(i,:) + (k1 + 2.0_dp*k2 + 2.0_dp*k3 + k4)/6.0_dp
         end do
     end function run_model
 
@@ -87,9 +87,9 @@ contains
     !> @param[in] in the trajectory around which to perform the integration
     !> @param[in] din the initial condition
     !> @return dout the computed trajectory
-    function run_tangent_linear(tstep, in, din) result(dout)
+    function run_tangent_linear(tstep, in_array, din) result(dout)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: in(tstep, n_x), din(n_x)
+        real(dp), intent(in) :: in_array(tstep, n_x), din(n_x)
         real(dp) :: dout(tstep,n_x)
         real(dp), dimension(n_x) :: k1, k2, k3, dk1, dk2, dk3, dk4
         integer :: i
@@ -98,13 +98,13 @@ contains
         dout(1,:) = din
 
         do i = 1, tstep-1
-            k1 = h*dRdT(in(i,:))
-            k2 = h*dRdT(in(i,:) + 0.5_dp*k1)
-            k3 = h*dRdT(in(i,:) + 0.5_dp*k2)
-            dk1 = h*jacob(in(i,:), dout(i,:))
-            dk2 = h*jacob(in(i,:) + 0.5_dp*k1, dout(i,:) + 0.5_dp*dk1)
-            dk3 = h*jacob(in(i,:) + 0.5_dp*k2, dout(i,:) + 0.5_dp*dk2)
-            dk4 = h*jacob(in(i,:) + k3, dout(i,:) + dk3)
+            k1 = h*dRdT(in_array(i,:))
+            k2 = h*dRdT(in_array(i,:) + 0.5_dp*k1)
+            k3 = h*dRdT(in_array(i,:) + 0.5_dp*k2)
+            dk1 = h*jacob(in_array(i,:), dout(i,:))
+            dk2 = h*jacob(in_array(i,:) + 0.5_dp*k1, dout(i,:) + 0.5_dp*dk1)
+            dk3 = h*jacob(in_array(i,:) + 0.5_dp*k2, dout(i,:) + 0.5_dp*dk2)
+            dk4 = h*jacob(in_array(i,:) + k3, dout(i,:) + dk3)
 
             dout(i+1,:) = dout(i,:) + (dk1 + 2.0_dp*dk2 + 2.0_dp*dk3 + dk4)/6.0_dp
         end do
@@ -116,9 +116,9 @@ contains
     !> @param[in] in the trajectory around which to perform the integration
     !> @param[in] din_a the initial condition
     !> @return dout_a the computed trajectory
-    function run_adjoint(tstep, in, din_a) result(dout_a)
+    function run_adjoint(tstep, in_array, din_a) result(dout_a)
         integer, intent(in) :: tstep
-        real(dp), intent(in) :: in(:,:), din_a(n_x)
+        real(dp), intent(in) :: in_array(:,:), din_a(n_x)
         real(dp) :: dout_a(n_x)
         real(dp), dimension(n_x) :: k1, k2, k3, dk1_a, dk2_a, dk3_a, dk4_a
         integer :: i
@@ -127,13 +127,13 @@ contains
         dout_a = din_a
 
         do i = tstep-1, 1, -1
-            k1 = h*dRdT(in(i,:))
-            k2 = h*dRdT(in(i,:) + 0.5_dp*k1)
-            k3 = h*dRdT(in(i,:) + 0.5_dp*k2)
-            dk1_a = h*jacob_a(in(i,:) + k3, dout_a)
-            dk2_a = h*jacob_a(in(i,:) + 0.5_dp*k2, dout_a + 0.5_dp*dk1_a)
-            dk3_a = h*jacob_a(in(i,:) + 0.5_dp*k1, dout_a + 0.5_dp*dk2_a)
-            dk4_a = h*jacob_a(in(i,:), dout_a + dk3_a)
+            k1 = h*dRdT(in_array(i,:))
+            k2 = h*dRdT(in_array(i,:) + 0.5_dp*k1)
+            k3 = h*dRdT(in_array(i,:) + 0.5_dp*k2)
+            dk1_a = h*jacob_a(in_array(i,:) + k3, dout_a)
+            dk2_a = h*jacob_a(in_array(i,:) + 0.5_dp*k2, dout_a + 0.5_dp*dk1_a)
+            dk3_a = h*jacob_a(in_array(i,:) + 0.5_dp*k1, dout_a + 0.5_dp*dk2_a)
+            dk4_a = h*jacob_a(in_array(i,:), dout_a + dk3_a)
 
             dout_a = dout_a + (dk1_a + 2.0_dp*dk2_a + 2.0_dp*dk3_a + dk4_a)/6.0_dp
         end do
