@@ -64,30 +64,39 @@ program lorenz96_4dvar
     call output(time, obs, "obs.txt", freq)
 
     ! Set initial best guess
-    initial = (/ (randn(1.0_dp, 1.0_dp), i = 1, n_x) /)
+    initial = (/ (truth(1,i) + randn(0.0_dp, 1.0_dp), i = 1, n_x ) /)
 
     ! Perform minimisation
-    iters = 1
+    iters = 0
     do
         ! Compute cost of current best guess
-        best_guess = run_model(tstep, initial)
-        cost = calc_cost(tstep, best_guess, obs)
-        diagn(iters,1) = cost
-
-        ! Output first guess
-        if (iters == 1) then
-            call output(time, best_guess, "first_guess.txt")
+        if (flag == 0 .or. flag == 1) then
+            best_guess = run_model(tstep, initial)
+            cost = calc_cost(tstep, best_guess, obs)
+            diagn(iters,1) = cost
+    
+            ! Output first guess
+            if (iters == 0) then
+                call output(time, best_guess, "first_guess.txt")
+            end if
+    
+            ! Compute gradient of cost function
+            grad = calc_cost_grad(tstep, best_guess, obs)
         end if
-
-        ! Compute gradient of cost function
-        grad = calc_cost_grad(tstep, best_guess, obs)
 
         ! Use gradient descent algorithm to step towards minimum of cost function
         call cgfam(n_x, initial, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
         if (flag <= 0 .or. iters > max_iterations) exit
-
-        iters = iters + 1
+        if (flag == 1) iters = iters + 1
+        if (flag == 2) then
+            if (cost < 0.2_dp * n_obs * obs_var * n_x) then
+                finish = .true.
+            end if
+        end if
     end do
+
+    write (*,'(A5,I5,A11)') 'Took ', iters, ' iterations'
+    write (*,'(A11,F7.2)') 'Final cost ', cost
 
     ! Output final best guess
     call output(time, best_guess, "final_guess.txt")
