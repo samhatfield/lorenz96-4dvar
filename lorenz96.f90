@@ -95,7 +95,7 @@ contains
         integer :: i
 
         ! First step
-        dout(1,:) = din
+        dout(:,1) = din
 
         do i = 1, tstep-1
             k1 = h*dRdT(in_array(:,i))
