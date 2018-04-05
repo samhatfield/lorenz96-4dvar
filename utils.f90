@@ -43,7 +43,7 @@ contains
 
             ! Box-Muller method
             u = (-2.0_ap * log(rand(1))) ** 0.5_ap
-            v =   2.0_ap * 6.28318530718_ap * rand(2)
+            v = 6.28318530718_ap * rand(2)
             randn = mean + stdev * u * sin(v)
         end function randn
 end module
