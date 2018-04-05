@@ -10,26 +10,29 @@ program lorenz96_4dvar
     use utils, only: time_seed, randn
     use io, only: output
     use assim, only: calc_cost, calc_cost_grad
+    use rp_emulator
 
     implicit none
 
-    real(ap), dimension(n_x,tstep) :: truth = 0.0_ap
-    real(ap), dimension(n_x,tstep) :: best_guess
-    real(ap) :: obs(n_x,tstep/freq)
-    real(ap) :: cost, diagn(1,max_iterations)
-    real(ap) :: grad(n_x), f, norm, initial(n_x)
-    real(ap) :: time(tstep)
+    real(dp), dimension(n_x,tstep) :: truth = 0.0_dp
+    real(dp), dimension(n_x,tstep) :: best_guess
+    real(dp) :: obs(n_x,tstep/freq)
+    real(dp) :: cost, diagn(1,max_iterations) = 0.0_dp
+    real(dp) :: grad(n_x), f, norm, initial(n_x)
+    real(dp) :: time(tstep)
     integer :: i, j, iters
 
     ! Dummy variables for gradient descent algorithm
-    real(ap) :: d(n_x), grad_old(n_x), w(n_x)
+    real(dp) :: d(n_x), grad_old(n_x), w(n_x)
 
     ! Flags to control gradient descent algorithm behaviour
     integer :: printflags(2) = (/ -1, 2 /), flag = 0, rest = 0, method = 3
 
     ! Variables required by gradient descent subroutine call, but that aren't actually used
-    real(ap) :: eps = 1.0d-5
+    real(dp) :: eps = 1.0d-5
     logical :: finish = .false.
+
+    RPE_DEFAULT_SBITS = sbits
 
     ! Check whether observation frequency divides into total number of timsteps
     if (mod(tstep, freq) /= 0) then
@@ -43,7 +46,7 @@ program lorenz96_4dvar
     time = (/ (real(i)*h, i = 0, tstep-1) /)
 
     ! Spin up truth
-    truth(:,1) = (/ (randn(0.0_ap, 5.0_ap), i = 1, n_x) /)
+    truth(:,1) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
     do i = 1, spin_up
         truth(:,:1) = run_model(1, truth(:,1))
     end do
@@ -64,7 +67,7 @@ program lorenz96_4dvar
     call output(time, obs, "obs.txt", freq)
 
     ! Set initial best guess
-    initial = (/ (truth(i,1) + randn(0.0_ap, init_err), i = 1, n_x ) /)
+    initial = (/ (truth(i,1) + randn(0.0_dp, init_err), i = 1, n_x ) /)
 
     ! Perform minimisation
     iters = 1
@@ -89,7 +92,7 @@ program lorenz96_4dvar
         if (flag <= 0 .or. iters >= max_iterations) exit
         if (flag == 1) iters = iters + 1
         if (flag == 2) then
-            if (cost < 0.2_ap * n_obs * obs_var * n_x) then
+            if (cost < 0.2_dp * n_obs * obs_var * n_x) then
                 finish = .true.
             end if
         end if
@@ -102,5 +105,5 @@ program lorenz96_4dvar
     call output(time, best_guess, "final_guess.txt")
 
     ! Output diagnostics
-    call output((/ (real(i,ap), i = 1, max_iterations) /), diagn, "diagnostics.txt")
+    call output((/ (real(i,dp), i = 1, max_iterations) /), diagn, "diagnostics.txt")
 end program lorenz96_4dvar

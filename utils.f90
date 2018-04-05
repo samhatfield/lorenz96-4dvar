@@ -35,15 +35,15 @@ contains
         !> @param stdev the standard deviation of the distribution to draw from
         !> @return randn the generated random number
         function randn(mean, stdev)
-            real(ap), intent(in) :: mean, stdev
-            real(ap) :: u, v, randn
-            real(ap) :: rand(2)
+            real(dp), intent(in) :: mean, stdev
+            real(dp) :: u, v, randn
+            real(dp) :: rand(2)
 
             call random_number(rand)
 
             ! Box-Muller method
-            u = (-2.0_ap * log(rand(1))) ** 0.5_ap
-            v = 6.28318530718_ap * rand(2)
+            u = (-2.0_dp * log(rand(1))) ** 0.5_dp
+            v = 6.28318530718_dp * rand(2)
             randn = mean + stdev * u * sin(v)
         end function randn
 end module
