@@ -12,7 +12,7 @@ module lorenz96
     public run_model, run_tangent_linear, run_adjoint
 
     ! Model parameters
-    real(ap) :: F = 20.0_ap
+    real(ap) :: F = 8.0_ap
 
 contains
     !> @brief

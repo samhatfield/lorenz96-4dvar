@@ -15,15 +15,15 @@ module params
     logical, parameter :: output_x = .true.
 
     ! State vector properties
-    integer, parameter :: n_x = 40
+    integer, parameter :: n_x = 36
 
-    real(ap), parameter :: h = 0.01_ap
-    real(ap), parameter :: wind_len = 1.2_ap
+    real(ap), parameter :: h = 0.05_ap
+    real(ap), parameter :: wind_len = 1.0_ap
     integer, parameter :: spin_up = 5000
     integer, parameter :: tstep = wind_len/h
-    integer, parameter :: freq = 10
+    integer, parameter :: freq = 2
     integer, parameter :: n_obs = (tstep - 1) / freq + 1
     real(ap), parameter :: obs_var = 2.0_ap
-    integer, parameter :: max_iterations = 3000
+    integer, parameter :: max_iterations = 1000
     integer :: last
 end module params

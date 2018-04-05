@@ -64,7 +64,7 @@ program lorenz96_4dvar
     call output(time, obs, "obs.txt", freq)
 
     ! Set initial best guess
-    initial = (/ (truth(i,1) + randn(0.0_ap, 1.0_ap), i = 1, n_x ) /)
+    initial = (/ (truth(i,1) + randn(0.0_ap, init_err), i = 1, n_x ) /)
 
     ! Perform minimisation
     iters = 1
@@ -76,7 +76,7 @@ program lorenz96_4dvar
             diagn(1,iters) = cost
     
             ! Output first guess
-            if (iters == 0) then
+            if (iters == 1) then
                 call output(time, best_guess, "first_guess.txt")
             end if
     
