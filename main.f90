@@ -8,28 +8,22 @@ program lorenz96_4dvar
     use params
     use lorenz96, only: run_model
     use utils, only: time_seed, randn
+    use minimisation, only: minimise
     use io, only: output
-    use assim, only: calc_cost, calc_cost_grad
 
     implicit none
 
     real(ap), dimension(n_x,tstep) :: truth = 0.0_ap
     real(ap), dimension(n_x,tstep) :: best_guess
     real(ap) :: obs(n_x,tstep/freq)
-    real(ap) :: cost, diagn(1,max_iterations)
-    real(ap) :: grad(n_x), f, norm, initial(n_x)
+    real(ap) :: initial(n_x)
     real(ap) :: time(tstep)
-    integer :: i, j, iters
+    real(ap) :: diagn(1,max_iterations)
+    integer :: i, j
 
-    ! Dummy variables for gradient descent algorithm
-    real(ap) :: d(n_x), grad_old(n_x), w(n_x)
-
-    ! Flags to control gradient descent algorithm behaviour
-    integer :: printflags(2) = (/ -1, 2 /), flag = 0, rest = 0, method = 3
-
-    ! Variables required by gradient descent subroutine call, but that aren't actually used
-    real(ap) :: eps = 1.0d-5
-    logical :: finish = .false.
+    !==========================================================================
+    ! Setup
+    !==========================================================================
 
     ! Check whether observation frequency divides into total number of timsteps
     if (mod(tstep, freq) /= 0) then
@@ -42,6 +36,10 @@ program lorenz96_4dvar
     ! Generate time axis
     time = (/ (real(i)*h, i = 0, tstep-1) /)
 
+    !==========================================================================
+    ! Generate truth and observations
+    !==========================================================================
+    
     ! Spin up truth
     truth(:,1) = (/ (randn(0.0_ap, 5.0_ap), i = 1, n_x) /)
     do i = 1, spin_up
@@ -63,44 +61,33 @@ program lorenz96_4dvar
     call output(time, truth, "truth.txt")
     call output(time, obs, "obs.txt", freq)
 
+    !==========================================================================
+    ! Set initial guess
+    !==========================================================================
+
     ! Set initial best guess
     initial = (/ (truth(i,1) + randn(0.0_ap, init_err), i = 1, n_x ) /)
 
+    ! Output first guess
+    best_guess = run_model(tstep, initial)
+    call output(time, best_guess, "first_guess.txt")
+    
+    !==========================================================================
     ! Perform minimisation
-    iters = 1
-    do
-        ! Compute cost of current best guess
-        if (flag == 0 .or. flag == 1) then
-            best_guess = run_model(tstep, initial)
-            cost = calc_cost(tstep, best_guess, obs)
-            diagn(1,iters) = cost
-    
-            ! Output first guess
-            if (iters == 1) then
-                call output(time, best_guess, "first_guess.txt")
-            end if
-    
-            ! Compute gradient of cost function
-            grad = calc_cost_grad(tstep, best_guess, obs)
-        end if
+    !==========================================================================
 
-        ! Use gradient descent algorithm to step towards minimum of cost function
-        call cgfam(n_x, initial, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
-        if (flag <= 0 .or. iters >= max_iterations) exit
-        if (flag == 1) iters = iters + 1
-        if (flag == 2) then
-            if (cost < 0.2_ap * n_obs * obs_var * n_x) then
-                finish = .true.
-            end if
-        end if
-    end do
+    call minimise(initial, obs, best_guess, diagn)
 
-    write (*,'(A5,I5,A11)') 'Took ', iters, ' iterations'
-    write (*,'(A11,F9.2)') 'Final cost ', cost
+    !==========================================================================
+    ! Finish
+    !==========================================================================
 
     ! Output final best guess
     call output(time, best_guess, "final_guess.txt")
 
     ! Output diagnostics
     call output((/ (real(i,ap), i = 1, max_iterations) /), diagn, "diagnostics.txt")
+
+    write (*,'(A5,I5,A11)') 'Took ', size(pack(diagn(1,:), diagn(1,:) >= 0.0_ap)), ' iterations'
+    write (*,'(A11,F9.2)') 'Final cost ', diagn(1,minloc(diagn(1,:))-1)
 end program lorenz96_4dvar
