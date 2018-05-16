@@ -14,9 +14,9 @@ program lorenz96_4dvar
     implicit none
 
     real(ap), dimension(n_x,tstep) :: truth = 0.0_ap
-    real(ap), dimension(n_x,tstep) :: best_guess
+    real(ap), dimension(n_x,tstep) :: guess_traj
     real(ap) :: obs(n_x,tstep/freq)
-    real(ap) :: initial(n_x)
+    real(ap), dimension(n_x) :: initial, best_guess
     real(ap) :: time(tstep)
     real(ap) :: diagn(1,max_iterations)
     integer :: i, j
@@ -69,8 +69,8 @@ program lorenz96_4dvar
     initial = (/ (truth(i,1) + randn(0.0_ap, init_err), i = 1, n_x ) /)
 
     ! Output first guess
-    best_guess = run_model(tstep, initial)
-    call output(time, best_guess, "first_guess.txt")
+    guess_traj = run_model(tstep, initial)
+    call output(time, guess_traj, "first_guess.txt")
     
     !==========================================================================
     ! Perform minimisation
@@ -83,7 +83,8 @@ program lorenz96_4dvar
     !==========================================================================
 
     ! Output final best guess
-    call output(time, best_guess, "final_guess.txt")
+    guess_traj = run_model(tstep, best_guess)
+    call output(time, guess_traj, "final_guess.txt")
 
     ! Output diagnostics
     call output((/ (real(i,ap), i = 1, max_iterations) /), diagn, "diagnostics.txt")

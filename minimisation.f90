@@ -24,8 +24,8 @@ contains
     !> performance
     subroutine minimise(initial, obs, best_guess, diagn)
         real(ap), intent(in) :: initial(n_x), obs(n_x,tstep/freq)
-        real(ap), intent(inout) :: best_guess(n_x,tstep), diagn(1,max_iterations)
-        real(ap) :: cost, grad(n_x)
+        real(ap), intent(inout) :: best_guess(n_x), diagn(1,max_iterations)
+        real(ap) :: cost, grad(n_x), guess_traj(n_x,tstep)
         integer :: iters = 1, i
 
         ! Dummy variables for conjugate gradient algorithm
@@ -43,12 +43,12 @@ contains
         do
             ! Compute cost of current best guess
             if (flag == 0 .or. flag == 1) then
-                best_guess = run_model(tstep, initial)
-                cost = calc_cost(tstep, best_guess, obs)
+                guess_traj = run_model(tstep, initial)
+                cost = calc_cost(tstep, guess_traj, obs)
                 diagn(1,iters) = cost
         
                 ! Compute gradient of cost function
-                grad = calc_cost_grad(tstep, best_guess, obs)
+                grad = calc_cost_grad(tstep, guess_traj, obs)
             end if
     
             ! Use gradient descent algorithm to step towards minimum of cost function
@@ -61,5 +61,7 @@ contains
                 end if
             end if
         end do
+
+        best_guess = initial
     end subroutine minimise
 end module minimisation
