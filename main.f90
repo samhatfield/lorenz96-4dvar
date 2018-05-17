@@ -1,7 +1,7 @@
 !> @author
 !> Sam Hatfield, AOPP, University of Oxford
 !> @brief
-!> An observing system simulation experiment (OSSE) using the Lorenz '63 model
+!> An observing system simulation experiment (OSSE) using the Lorenz '96 model
 !> and 4DVar.
 !> Based on code by Amos Lawless, University of Reading.
 program lorenz96_4dvar
