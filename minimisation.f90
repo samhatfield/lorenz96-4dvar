@@ -17,42 +17,49 @@ contains
     !> @brief
     !> Find minimum of cost function given an initial guess using the conjugate
     !> gradient algorithm.
-    !> @param[in] initial the initial guess
-    !> @param[in] obs the observations
-    !> @param[inout] best_guess the computed minimum
+    !> @param[in] initial_del the initial guess
+    !> @param[in] innov the innovations
+    !> @param[in] guess_traj the trajectory around which the minimisation is
+    !> performed
+    !> @param[inout] del the computed minimum
     !> @param[inout] diagn array containing diagnostics of minimisation
     !> performance
-    subroutine minimise(initial, obs, best_guess, diagn)
-        real(ap), intent(in) :: initial(n_x), obs(n_x,tstep/freq)
-        real(ap), intent(inout) :: best_guess(n_x), diagn(1,max_iterations)
-        real(ap) :: cost, grad(n_x), guess_traj(n_x,tstep)
-        integer :: iters = 1, i
+    subroutine minimise(initial_del, innov, guess_traj, del, diagn)
+        real(ap), intent(in) :: initial_del(n_x), innov(n_x,tstep/freq), guess_traj(n_x,tstep)
+        real(ap), intent(inout) :: del(n_x), diagn(1,max_iterations)
+        real(ap) :: cost, grad(n_x)
+        integer :: iters, i
 
         ! Dummy variables for conjugate gradient algorithm
         real(ap) :: d(n_x), grad_old(n_x), w(n_x)
     
         ! Flags to control conjugate gradient algorithm behaviour
-        integer :: printflags(2) = (/ -1, 2 /), flag = 0, rest = 0, method = 3
+        integer :: printflags(2) = (/ -1, 2 /), flag, rest, method = 3
     
         ! Variables required by conjugate gradient subroutine call, but that aren't actually used
         real(ap) :: eps = 1.0d-5
-        logical :: finish = .false.
+        logical :: finish
 
-        diagn = -1.0_dp
+        ! Initialise minimisation parameters
+        flag = 0
+        rest = 0
+        iters = 1
+        finish = .false.
+        del = initial_del
+        diagn = -1.0_ap
 
         do
             ! Compute cost of current best guess
             if (flag == 0 .or. flag == 1) then
-                guess_traj = run_model(tstep, initial)
-                cost = calc_cost(tstep, guess_traj, obs)
+                cost = calc_cost(tstep, guess_traj, del, innov)
                 diagn(1,iters) = cost
         
                 ! Compute gradient of cost function
-                grad = calc_cost_grad(tstep, guess_traj, obs)
+                grad = calc_cost_grad(tstep, guess_traj, del, innov)
             end if
     
             ! Use gradient descent algorithm to step towards minimum of cost function
-            call cgfam(n_x, initial, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
+            call cgfam(n_x, del, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
             if (flag <= 0 .or. iters >= max_iterations) exit
             if (flag == 1) iters = iters + 1
             if (flag == 2) then
@@ -61,7 +68,5 @@ contains
                 end if
             end if
         end do
-
-        best_guess = initial
     end subroutine minimise
 end module minimisation

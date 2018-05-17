@@ -15,11 +15,11 @@ program lorenz96_4dvar
 
     real(ap), dimension(n_x,tstep) :: truth = 0.0_ap
     real(ap), dimension(n_x,tstep) :: guess_traj
-    real(ap) :: obs(n_x,tstep/freq)
-    real(ap), dimension(n_x) :: initial, best_guess
+    real(ap), dimension(n_x,tstep/freq) :: obs, innov
+    real(ap), dimension(n_x) :: initial, initial_del, final_del
     real(ap) :: time(tstep)
-    real(ap) :: diagn(1,max_iterations)
-    integer :: i, j
+    real(ap) :: diagn(1,out_iter*max_iterations) = -1.0_ap, diagn_inner(1,max_iterations)
+    integer :: i, j, num_iters = 1, num_iters_inner
 
     !==========================================================================
     ! Setup
@@ -76,19 +76,46 @@ program lorenz96_4dvar
     ! Perform minimisation
     !==========================================================================
 
-    call minimise(initial, obs, best_guess, diagn)
+    ! Perform outer loop
+    do j = 1, out_iter
+        ! Generate nonlinear forecast
+        guess_traj = run_model(tstep, initial)
+
+        ! Calculate innovations
+        innov = obs - guess_traj(:,1:tstep:freq)
+
+        ! Initial increment for inner loop
+        initial_del = 0.0_dp
+
+        ! Perform inner loop
+        call minimise(initial_del, innov, guess_traj, final_del, diagn_inner)
+
+        ! If loop ended early
+        if (any(diagn_inner(1,:) < 0.0_ap)) then
+            num_iters_inner = minloc(diagn_inner(1,:), dim=1)-1
+        else
+            num_iters_inner = max_iterations
+        end if
+
+        ! Store diagnostics
+        diagn(1,num_iters:num_iters+num_iters_inner-1) = diagn_inner(1,:)
+        num_iters = num_iters + num_iters_inner
+
+        ! Update best guess
+        initial = initial + final_del
+    end do
 
     !==========================================================================
     ! Finish
     !==========================================================================
 
     ! Output final best guess
-    guess_traj = run_model(tstep, best_guess)
+    guess_traj = run_model(tstep, initial)
     call output(time, guess_traj, "final_guess.txt")
 
     ! Output diagnostics
-    call output((/ (real(i,ap), i = 1, max_iterations) /), diagn, "diagnostics.txt")
+    call output((/ (real(i,ap), i = 1, size(diagn(1,:)) ) /), diagn, "diagnostics.txt")
 
-    write (*,'(A5,I5,A11)') 'Took ', size(pack(diagn(1,:), diagn(1,:) >= 0.0_ap)), ' iterations'
-    write (*,'(A11,F9.2)') 'Final cost ', diagn(1,minloc(diagn(1,:))-1)
+    write (*,'(A5,I5,A11)') 'Took ', num_iters-1, ' iterations'
+    write (*,'(A11,F9.2)') 'Final cost ', diagn(1,num_iters-1)
 end program lorenz96_4dvar
