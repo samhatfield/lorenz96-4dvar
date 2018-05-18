@@ -26,17 +26,15 @@ c    Volume 2, Number 1, 1992, pages 21-42.
 c
 c  Parameters
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) beta
-      real(ap) betafr
-      real(ap) betapr
-      real(ap) f
+      double precision beta
+      double precision betafr
+      double precision betapr
+      double precision f
       logical finish
-      real(ap) g(n)
-      real(ap) gnorm
+      double precision g(n)
+      double precision gnorm
       integer i
       integer im
       integer iprint(2)
@@ -44,8 +42,8 @@ c
       integer n
       integer ndes
       integer nfun
-      real(ap) stp
-      real(ap) x(n)
+      double precision stp
+      double precision x(n)
 
       if ( iter .eq. 0 ) then
 
@@ -174,22 +172,20 @@ c     method =  1 : fletcher-reeves
 c               2 : polak-ribiere
 c               3 : positive polak-ribiere ( beta=max{beta,0} )
 c
-      use params, only: ap
-
       implicit none
 
       integer n
 
-      real(ap) d(n)
-      real(ap) eps
-      real(ap) f
-      real(ap) g(n)
-      real(ap) gold(n)
-      real(ap) w(n)
-      real(ap) x(n)
+      double precision d(n)
+      double precision eps
+      double precision f
+      double precision g(n)
+      double precision gold(n)
+      double precision w(n)
+      double precision x(n)
 
       integer iprint(2),iflag,irest,method,im,ndes
-      real(ap) gtol,one,zero,gnorm,ddot,stp1,ftol,xtol,stpmin,
+      double precision gtol,one,zero,gnorm,ddot,stp1,ftol,xtol,stpmin,
      .       stpmax,stp,beta,betafr,betapr,dg0,gg,gg0,dgold,
      .       dgout,dg,dg1
       integer iter,nfun,maxfev,info,i,nfev,nrst,ides
@@ -227,7 +223,7 @@ c
         d(i) = - g(i)
       end do
 
-      gnorm = sqrt(ddot(n,g,1,g,1))
+      gnorm = dsqrt(ddot(n,g,1,g,1))
       stp1= one/gnorm
 c
 c     parameters for line search routine
@@ -384,7 +380,7 @@ c
 c
 c     return to driver for termination test
 c
-      gnorm = sqrt ( ddot ( n, g, 1, g, 1 ) )
+      gnorm = dsqrt ( ddot ( n, g, 1, g, 1 ) )
       iflag=2
       return
 
@@ -488,15 +484,13 @@ c
 c     argonne national laboratory. minpack project. june 1983
 c     jorge j. more', david j. thuente
 c
-      use params, only: ap
-
       implicit none
 
       integer info
-      real(ap) stx
-      real(ap) fx,dx,sty,fy,dy,stp,fp,dp,stpmin,stpmax
+      double precision stx
+      double precision fx,dx,sty,fy,dy,stp,fp,dp,stpmin,stpmax
       logical brackt,bound
-      real(ap) gamma,p,q,r,s,sgnd,stpc,stpf,stpq,theta
+      double precision gamma,p,q,r,s,sgnd,stpc,stpf,stpq,theta
 
       info = 0
 c
@@ -790,8 +784,6 @@ c
 c     argonne national laboratory. minpack project. june 1983
 c     jorge j. more', david j. thuente
 c
-      use params, only: ap
-
       implicit none
 
       integer n
@@ -799,14 +791,14 @@ c
       integer info
       integer maxfev
       integer nfev
-      real(ap) f,stp,ftol,gtol,xtol,stpmin,stpmax
-      real(ap) x(n),g(n),s(n),wa(n)
+      double precision f,stp,ftol,gtol,xtol,stpmin,stpmax
+      double precision x(n),g(n),s(n),wa(n)
 
       save
 
       integer infoc,j
       logical brackt,stage1
-      real(ap) dg,dgm,dginit,dgtest,dgx,dgxm,dgy,dgym,
+      double precision dg,dgm,dginit,dgtest,dgx,dgxm,dgy,dgym,
      *       finit,ftest1,fm,fx,fxm,fy,fym,p5,p66,stx,sty,
      *       stmin,stmax,width,width1,xtrapf,zero,dgout
 
@@ -999,7 +991,7 @@ cc DASUM takes the sum of the absolute values.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c  Modified:
 c
@@ -1026,20 +1018,18 @@ c  Parameters:
 c
 c    Input, integer N, the number of entries in the vector.
 c
-c    Input, real(ap) X(*), the vector to be examined.
+c    Input, double precision X(*), the vector to be examined.
 c
 c    Input, integer INCX, the increment between successive entries of X.
 c    INCX must not be negative.
 c
-c    Output, real(ap) DASUM, the sum of the absolute values of X.
+c    Output, double precision DASUM, the sum of the absolute values of X.
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) dasum
-      real(ap) dtemp
-      real(ap) dx(*)
+      double precision dasum
+      double precision dtemp
+      double precision dx(*)
       integer i
       integer incx
       integer m
@@ -1061,7 +1051,7 @@ c
 
         nincx = n * incx
         do i = 1, nincx, incx
-          dtemp = dtemp + abs ( dx(i) )
+          dtemp = dtemp + dabs ( dx(i) )
         end do
 
       else
@@ -1069,17 +1059,17 @@ c
         m = mod ( n, 6 )
 
         do i = 1,m
-          dtemp = dtemp + abs ( dx(i) )
+          dtemp = dtemp + dabs ( dx(i) )
         end do
 
         do i = m + 1, n, 6
           dtemp = dtemp 
-     &      + abs ( dx(i) ) 
-     &      + abs ( dx(i+1) ) 
-     &      + abs ( dx(i+2) )
-     &      + abs ( dx(i+3) ) 
-     &      + abs ( dx(i+4) ) 
-     &      + abs ( dx(i+5) )
+     &      + dabs ( dx(i) ) 
+     &      + dabs ( dx(i+1) ) 
+     &      + dabs ( dx(i+2) )
+     &      + dabs ( dx(i+3) ) 
+     &      + dabs ( dx(i+4) ) 
+     &      + dabs ( dx(i+5) )
         end do
 
       end if
@@ -1096,7 +1086,7 @@ cc DAXPY computes constant times a vector plus a vector.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c    This routine uses unrolled loops for increments equal to one.
 c
@@ -1125,24 +1115,22 @@ c  Parameters:
 c
 c    Input, integer N, the number of elements in DX and DY.
 c
-c    Input, real(ap) DA, the multiplier of DX.
+c    Input, double precision DA, the multiplier of DX.
 c
-c    Input, real(ap) DX(*), the first vector.
+c    Input, double precision DX(*), the first vector.
 c
 c    Input, integer INCX, the increment between successive entries of DX.
 c
-c    Input/output, real(ap) DY(*), the second vector.
+c    Input/output, double precision DY(*), the second vector.
 c    On output, DY(*) has been replaced by DY(*) + DA * DX(*).
 c
 c    Input, integer INCY, the increment between successive entries of DY.
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) da
-      real(ap) dx(*)
-      real(ap) dy(*)
+      double precision da
+      double precision dx(*)
+      double precision dy(*)
       integer i
       integer incx
       integer incy
@@ -1199,7 +1187,7 @@ cc DCOPY copies a vector.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c    The routine uses unrolled loops for increments equal to one.
 c
@@ -1228,20 +1216,18 @@ c  Parameters:
 c
 c    Input, integer N, the number of elements in DX and DY.
 c
-c    Input, real(ap) DX(*), the first vector.
+c    Input, double precision DX(*), the first vector.
 c
 c    Input, integer INCX, the increment between successive entries of DX.
 c
-c    Output, real(ap) DY(*), the second vector.
+c    Output, double precision DY(*), the second vector.
 c
 c    Input, integer INCY, the increment between successive entries of DY.
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) dx(*)
-      real(ap) dy(*)
+      double precision dx(*)
+      double precision dy(*)
       integer i
       integer incx
       integer incy
@@ -1301,7 +1287,7 @@ cc DDOT forms the dot product of two vectors.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c    This routine uses unrolled loops for increments equal to one.
 c
@@ -1330,25 +1316,23 @@ c  Parameters:
 c
 c    Input, integer N, the number of entries in the vectors.
 c
-c    Input, real(ap) DX(*), the first vector.
+c    Input, double precision DX(*), the first vector.
 c
 c    Input, integer INCX, the increment between successive entries in DX.
 c
-c    Input, real(ap) DY(*), the second vector.
+c    Input, double precision DY(*), the second vector.
 c
 c    Input, integer INCY, the increment between successive entries in DY.
 c
-c    Output, real(ap) DDOT, the sum of the product of the 
+c    Output, double precision DDOT, the sum of the product of the 
 c    corresponding entries of DX and DY.
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) ddot
-      real(ap) dx(*)
-      real(ap) dy(*)
-      real(ap) dtemp
+      double precision ddot
+      double precision dx(*)
+      double precision dy(*)
+      double precision dtemp
       integer i,incx,incy,ix,iy,m,n
 
       ddot = 0.0d0
@@ -1399,7 +1383,7 @@ cc DNRM2 returns the euclidean norm of a vector.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c      DNRM2 ( X ) = sqrt ( X' * X )
 c
@@ -1424,27 +1408,25 @@ c  Parameters:
 c
 c    Input, integer N, the number of entries in the vector.
 c
-c    Input, real(ap) X(*), the vector whose norm is to be computed.
+c    Input, double precision X(*), the vector whose norm is to be computed.
 c
 c    Input, integer INCX, the increment between successive entries of X.
 c
-c    Output, real(ap) DNRM2, the Euclidean norm of X.
+c    Output, double precision DNRM2, the Euclidean norm of X.
 c
-      use params, only: ap
-
       implicit none
 
       integer                           incx, n
 
-      real(ap) dnrm2 
-      real(ap)                  x( * )
+      double precision dnrm2 
+      double precision                  x( * )
 
 
-      real(ap)      one         , zero
+      double precision      one         , zero
       parameter           ( one = 1.0d+0, zero = 0.0d+0 )
 
       integer               ix
-      real(ap)      absxi, norm, scale, ssq
+      double precision      absxi, norm, scale, ssq
 
       intrinsic             abs, sqrt
 
@@ -1486,7 +1468,7 @@ cc DSCAL scales a vector by a constant.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c  Modified:
 c
@@ -1513,18 +1495,16 @@ c  Parameters:
 c
 c    Input, integer N, the number of entries in the vector.
 c
-c    Input, real(ap) SA, the multiplier.
+c    Input, double precision SA, the multiplier.
 c
-c    Input/output, real(ap) X(*), the vector to be scaled.
+c    Input/output, double precision X(*), the vector to be scaled.
 c
 c    Input, integer INCX, the increment between successive entries of X.
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) da
-      real(ap) dx(*)
+      double precision da
+      double precision dx(*)
       integer i,incx,m,n,nincx
 
       if( n.le.0 .or. incx.le.0 )return
@@ -1568,7 +1548,7 @@ cc DSWAP interchanges two vectors.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c  Modified:
 c
@@ -1595,19 +1575,17 @@ c  Parameters:
 c
 c    Input, integer N, the number of entries in the vectors.
 c
-c    Input/output, real(ap) X(*), one of the vectors to swap.
+c    Input/output, double precision X(*), one of the vectors to swap.
 c
 c    Input, integer INCX, the increment between successive entries of X.
 c
-c    Input/output, real(ap) Y(*), one of the vectors to swap.
+c    Input/output, double precision Y(*), one of the vectors to swap.
 c
 c    Input, integer INCY, the increment between successive elements of Y.
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) dx(*),dy(*),dtemp
+      double precision dx(*),dy(*),dtemp
       integer i,incx,incy,ix,iy,m,n
 
       if(n.le.0)return
@@ -1665,7 +1643,7 @@ cc IDAMAX finds the index of element having maximum absolute value.
 c
 c  Discussion:
 c
-c    This routine uses the default global precision.
+c    This routine uses double precision real arithmetic.
 c
 c  Modified:
 c
@@ -1692,18 +1670,16 @@ c  Parameters:
 c
 c    Input, integer N, the number of entries in the vector.
 c
-c    Input, real(ap) X(*), the vector to be examined.
+c    Input, double precision X(*), the vector to be examined.
 c
 c    Input, integer INCX, the increment between successive entries of SX.
 c
 c    Output, integer IDAMAX, the index of the element of SX of maximum
 c    absolute value.
 c
-      use params, only: ap
-
       implicit none
 
-      real(ap) dx(*),dmax
+      double precision dx(*),dmax
       integer idamax
       integer i,incx,ix,n
 
@@ -1716,12 +1692,12 @@ c
 c  code for increment not equal to 1
 c
       ix = 1
-      dmax = abs(dx(1))
+      dmax = dabs(dx(1))
       ix = ix + incx
       do  i = 2,n
-         if ( dmax .lt. abs ( dx(ix) ) ) then
+         if ( dmax .lt. dabs ( dx(ix) ) ) then
            idamax = i
-           dmax = abs(dx(ix))
+           dmax = dabs(dx(ix))
          end if
          ix = ix + incx
       end do
@@ -1729,11 +1705,11 @@ c
 c
 c  code for increment equal to 1
 c
-   20 dmax = abs(dx(1))
+   20 dmax = dabs(dx(1))
       do i = 2,n
-        if( dmax .lt. abs(dx(i)) ) then
+        if( dmax .lt. dabs(dx(i)) ) then
           idamax = i
-          dmax = abs(dx(i))
+          dmax = dabs(dx(i))
         end if
       end do
 
@@ -1756,16 +1732,14 @@ c    18 December 2008
 c
 c  Parameters:
 c
-c    Output, real(ap) TTIME, the elapsed user time in seconds.
+c    Output, double precision TTIME, the elapsed user time in seconds.
 c
-      use params, only: ap
-
       implicit none
 
       real temp
       real tarray(2)
       real etime
-      real(ap) ttime
+      double precision ttime
 
       temp = etime ( tarray ) 
 

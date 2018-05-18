@@ -25,19 +25,19 @@ contains
     !> @param[inout] diagn array containing diagnostics of minimisation
     !> performance
     subroutine minimise(initial_del, innov, guess_traj, del, diagn)
-        real(ap), intent(in) :: initial_del(n_x), innov(n_x,tstep/freq), guess_traj(n_x,tstep)
-        real(ap), intent(inout) :: del(n_x), diagn(1,max_iterations)
-        real(ap) :: cost, grad(n_x)
+        real(dp), intent(in) :: initial_del(n_x), innov(n_x,tstep/freq), guess_traj(n_x,tstep)
+        real(dp), intent(inout) :: del(n_x), diagn(1,max_iterations)
+        real(dp) :: cost, grad(n_x)
         integer :: iters, i
 
         ! Dummy variables for conjugate gradient algorithm
-        real(ap) :: d(n_x), grad_old(n_x), w(n_x)
+        real(dp) :: d(n_x), grad_old(n_x), w(n_x)
     
         ! Flags to control conjugate gradient algorithm behaviour
         integer :: printflags(2) = (/ -1, 2 /), flag, rest, method = 3
     
         ! Variables required by conjugate gradient subroutine call, but that aren't actually used
-        real(ap) :: eps = 1.0d-5
+        real(dp) :: eps = 1.0d-5
         logical :: finish
 
         ! Initialise minimisation parameters
@@ -46,7 +46,7 @@ contains
         iters = 1
         finish = .false.
         del = initial_del
-        diagn = -1.0_ap
+        diagn = -1.0_dp
 
         do
             ! Compute cost of current best guess
@@ -63,7 +63,7 @@ contains
             if (flag <= 0 .or. iters >= max_iterations) exit
             if (flag == 1) iters = iters + 1
             if (flag == 2) then
-                if (maxval(abs(grad)) <= 0.2_ap) then
+                if (maxval(abs(grad)) <= 0.2_dp) then
                     finish = .true.
                 end if
             end if

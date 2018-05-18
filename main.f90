@@ -13,12 +13,12 @@ program lorenz96_4dvar
 
     implicit none
 
-    real(ap), dimension(n_x,tstep) :: truth = 0.0_ap
-    real(ap), dimension(n_x,tstep) :: guess_traj
-    real(ap), dimension(n_x,tstep/freq) :: obs, innov
-    real(ap), dimension(n_x) :: initial, initial_del, final_del
-    real(ap) :: time(tstep)
-    real(ap) :: diagn(1,out_iter*max_iterations) = -1.0_ap, diagn_inner(1,max_iterations)
+    real(dp), dimension(n_x,tstep) :: truth = 0.0_dp
+    real(dp), dimension(n_x,tstep) :: guess_traj
+    real(dp), dimension(n_x,tstep/freq) :: obs, innov
+    real(dp), dimension(n_x) :: initial, initial_del, final_del
+    real(dp) :: time(tstep)
+    real(dp) :: diagn(1,out_iter*max_iterations) = -1.0_dp, diagn_inner(1,max_iterations)
     integer :: i, j, num_iters = 1, num_iters_inner
 
     !==========================================================================
@@ -41,7 +41,7 @@ program lorenz96_4dvar
     !==========================================================================
     
     ! Spin up truth
-    truth(:,1) = (/ (randn(0.0_ap, 5.0_ap), i = 1, n_x) /)
+    truth(:,1) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
     do i = 1, spin_up
         truth(:,:1) = run_model(1, truth(:,1))
     end do
@@ -66,7 +66,7 @@ program lorenz96_4dvar
     !==========================================================================
 
     ! Set initial best guess
-    initial = (/ (truth(i,1) + randn(0.0_ap, init_err), i = 1, n_x ) /)
+    initial = (/ (truth(i,1) + randn(0.0_dp, init_err), i = 1, n_x ) /)
 
     ! Output first guess
     guess_traj = run_model(tstep, initial)
@@ -91,7 +91,7 @@ program lorenz96_4dvar
         call minimise(initial_del, innov, guess_traj, final_del, diagn_inner)
 
         ! If loop ended early
-        if (any(diagn_inner(1,:) < 0.0_ap)) then
+        if (any(diagn_inner(1,:) < 0.0_dp)) then
             num_iters_inner = minloc(diagn_inner(1,:), dim=1)-1
         else
             num_iters_inner = max_iterations
@@ -114,7 +114,7 @@ program lorenz96_4dvar
     call output(time, guess_traj, "final_guess.txt")
 
     ! Output diagnostics
-    call output((/ (real(i,ap), i = 1, size(diagn(1,:)) ) /), diagn, "diagnostics.txt")
+    call output((/ (real(i,dp), i = 1, size(diagn(1,:)) ) /), diagn, "diagnostics.txt")
 
     write (*,'(A5,I5,A11)') 'Took ', num_iters-1, ' iterations'
     write (*,'(A11,F9.2)') 'Final cost ', diagn(1,num_iters-1)

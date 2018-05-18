@@ -23,18 +23,18 @@ contains
     !> @return J the cost function
     function calc_cost(tstep, traj, del, innov) result(J)
         integer, intent(in) :: tstep
-        real(ap), intent(in) :: traj(n_x,tstep), del(n_x), innov(n_x,tstep/freq)
-        real(ap) :: linear_traj(n_x,tstep)
-        real(ap) :: J
+        real(dp), intent(in) :: traj(n_x,tstep), del(n_x), innov(n_x,tstep/freq)
+        real(dp) :: linear_traj(n_x,tstep)
+        real(dp) :: J
         integer :: i
 
         ! Compute linear evolution of initial perturbation
         linear_traj = run_tangent_linear(tstep, traj, del)
 
         ! Calculate cost function
-        J = 0.0_ap
+        J = 0.0_dp
         do i = 1, tstep, freq
-            J = J + 0.5 * sum((linear_traj(:,i) - innov(:,1+i/freq))**2)/obs_var
+            J = J + 0.5_dp * sum((linear_traj(:,i) - innov(:,1+i/freq))**2)/obs_var
         end do
     end function calc_cost
 
@@ -51,9 +51,9 @@ contains
     !> initial perturbation
     function calc_cost_grad(tstep, traj, del, innov) result(hat)
         integer, intent(in) :: tstep
-        real(ap), intent(in) :: traj(n_x,tstep), del(n_x), innov(n_x,tstep/freq)
-        real(ap) :: linear_traj(n_x,tstep)
-        real(ap) :: hat(n_x)
+        real(dp), intent(in) :: traj(n_x,tstep), del(n_x), innov(n_x,tstep/freq)
+        real(dp) :: linear_traj(n_x,tstep)
+        real(dp) :: hat(n_x)
         integer :: i
 
         ! Compute linear evolution of initial perturbation
