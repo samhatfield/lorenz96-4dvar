@@ -10,6 +10,7 @@ program lorenz96_4dvar
     use utils, only: time_seed, randn
     use minimisation, only: minimise
     use io, only: output
+    use rp_emulator
 
     implicit none
 
@@ -24,6 +25,8 @@ program lorenz96_4dvar
     !==========================================================================
     ! Setup
     !==========================================================================
+
+    RPE_DEFAULT_SBITS = sbits
 
     ! Check whether observation frequency divides into total number of timsteps
     if (mod(tstep, freq) /= 0) then
