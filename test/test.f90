@@ -12,7 +12,7 @@ program test
     call test_adj
 contains
     subroutine test_tl
-        integer, parameter :: nsteps = 100
+        integer, parameter :: nsteps = 10
         real(ap), dimension(n_x) :: pert_orig, orig_state, pert, pert_state, diff
         real(ap), dimension(n_x,nsteps) :: orig_traj, pert_traj, pert_traj_tl
         real(ap) :: rel_err
