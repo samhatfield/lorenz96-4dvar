@@ -11,7 +11,7 @@ MODS = -Irpe/modules
 LIBS = -lrpe -Lrpe/lib
 
 # Main target: main executable
-main: main.o params.o lorenz96.o utils.o io.o assim.o minimisation.o cg_plus.f
+main: main.o params.o lorenz96.o utils.o io.o assim.o minimisation.o cg_plus.f90
 	$(FC) $(OPTS) -o $@ $^ $(LIBS)
 
 # Dependencies
