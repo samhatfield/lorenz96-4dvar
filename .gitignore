@@ -1,0 +1,8 @@
+*.txt
+*.npz
+*.mod
+*.o
+*.pdf
+main
+test/test
+rpe
