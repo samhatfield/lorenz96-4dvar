@@ -13,6 +13,7 @@ program test
 
     call test_tl
     call test_adj
+    call test_grad
 contains
     subroutine test_tl
         integer, parameter :: nsteps = 10
@@ -86,45 +87,57 @@ contains
     end subroutine test_adj
 
     subroutine test_grad
-        integer, parameter :: n_samples = 12
-        real(dp), dimension(n_x) :: initial, grad1, grad2, rand_unit
-        real(dp) :: grad1_norm(n_x), alpha = 1.0_dp, obs(n_x,tstep/freq), cost1, cost2
-        real(dp) :: traj(n_x,tstep)
-        real(dp) :: alpha_store(n_samples)
-        integer :: i
+        integer, parameter :: n_samples = 14
+        real(dp), dimension(n_x) :: initial, pert, grad1, grad2, rand_unit
+        real(dp) :: grad1_norm(n_x), alpha = 1.0_dp, obs(n_x,tstep/freq), innov(n_x,tstep/freq)
+        real(dp) :: cost1, cost2
+        real(dp) :: traj(n_x,tstep), del(n_x)
+        integer :: i, j
+
+        print *, ''
+        print *, '============================================================'
+        print *, 'Gradient test'
+        print *, '============================================================'
+        print *, 'The relative error should tend towards one as the magnitude'
+        print *, 'of the perturbation decreases.'
+        print *, '============================================================'
 
         initial = (/ ( randn(0.0_dp, 1.0_dp), i = 1, n_x ) /)
+        pert = (/ ( randn(0.0_dp, 1.0_dp), i = 1, n_x ) /)
 
+        ! Unperturbed input to cost function
+        del = 0.1_dp
+
+        ! Compute trajectory to linearise about
         traj = run_model(tstep, initial)
 
+        ! Calculate observations
         do i = 1, tstep, freq
-            obs(:,1+i/freq) = traj(:,i)
+            last = i
+            do j = 1, n_x
+                obs(j, 1+i/freq) = randn(traj(j,i), sqrt(obs_var))
+            end do
         end do
 
-        ! Generate random unit vector
-        call random_number(rand_unit)
-        rand_unit = rand_unit / norm2(rand_unit)
+        ! Compute innovations
+        innov = obs - traj(:,1:tstep:freq)
 
-        ! Trajectory from random vector
-        traj = run_model(tstep, rand_unit)
-        grad1 = calc_cost_grad(tstep, traj, obs)
-        cost1 = calc_cost(tstep, traj, obs)
-
-        grad1_norm = grad1 / norm2(grad1)
+        ! Compute cost function and gradient at unperturbed input value
+        cost1 = calc_cost(tstep, traj, del, innov)
+        grad1 = calc_cost_grad(tstep, traj, del, innov)
 
         do i = 1, n_samples
-            initial = rand_unit + alpha*grad1_norm
+            ! Perturb input to cost function
+            initial = del + alpha*pert
 
-            traj = run_model(tstep, initial)
-            cost2 = calc_cost(tstep, traj, obs)
+            ! Compute cost at perturbed input
+            cost2 = calc_cost(tstep, traj, initial, innov)
 
-            print *,
-
-            alpha_store(i) = alpha
-            print *, alpha, (cost2 - cost1)/(alpha * dot_product(grad1_norm, grad1))
+            write (*,'(E10.1, F18.11)') alpha, (cost2 - cost1)/(dot_product(initial, grad1))
 
             alpha = alpha * 0.1_dp
         end do
+        print *, '============================================================'
     end subroutine test_grad
 
     subroutine output(time_axis, output_array, filename, stride_in)
