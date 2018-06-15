@@ -162,6 +162,6 @@ contains
             dout_a = dout_a + (dk1_a + two*dk2_a + two*dk3_a + dk4_a)/six
         end do
 
-        dout_a_dp = dout_a
+        dout_a_dp = dout_a%val
     end function run_adjoint
 end module lorenz96
