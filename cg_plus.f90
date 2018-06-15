@@ -159,7 +159,7 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     !     method =  1 : fletcher-reeves
     !               2 : polak-ribiere
     !               3 : positive polak-ribiere ( beta=max{beta,0} )
-    !
+
     implicit none
 
     integer n
@@ -185,101 +185,112 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     save
     data one,zero/1.0d+0,0.0d+0/
 
-    ! iflag = 1 indicates a re-entry with new function values
-    if(iflag.eq.1) go to 72
-
     ! iflag = 2 indicates a re-entry with a new iterate
-    if(iflag.eq.2) go to 80
+    if (iflag.eq.2) then
+        ! call subroutine for printing output
+        if (iprint(1).ge.0) then
+            call cgbd(iprint,iter,nfun,gnorm,n,x,f,g,stp,finish,ndes,im,betafr,betapr,beta)
+        end if
 
-    ! initialize
-    !
-    ! im =   number of times betapr was negative for method 2 or
-    !        number of times betapr was 0 for method 3
-    !
-    ! ndes = number of line search iterations after wolfe conditions
-    !        were satisfied
-    !
-    iter= 0
-    if(n.le.0) go to 96
-    nfun= 1
-    new=.true.
-    nrst= 0
-    im=0
-    ndes=0
-
-    do i = 1, n
-        d(i) = - g(i)
-    end do
-
-    gnorm = sqrt(dot_product(g,g))
-    stp1= one/gnorm
-
-    ! parameters for line search routine
-    !
-    ! ftol and gtol are nonnegative input variables. termination
-    !   occurs when the sufficient decrease condition and the
-    !   directional derivative condition are satisfied.
-    !
-    ! xtol is a nonnegative input variable. termination occurs
-    !   when the relative width of the interval of uncertainty
-    !   is at most xtol.
-    !
-    ! stpmin and stpmax are nonnegative input variables which
-    !   specify lower and upper bounds for the step.
-    !
-    ! maxfev is a positive integer input variable. termination
-    !   occurs when the number of calls to fcn is at least
-    !   maxfev by the end of an iteration.
-
-    ftol= 1.0d-4
-    gtol= 1.0d-1
-    if (gtol.le.1.d-04) then
-        write(*,145)
-        gtol=1.d-02
-    end if
-    xtol= 1.0d-17
-    stpmin= 1.0d-20
-    stpmax= 1.0d+20
-    maxfev= 40
-
-    if (iprint(1).ge.0) then
-        call cgbd(iprint,iter,nfun,gnorm,n,x,f,g,stp,finish,ndes,im,betafr,betapr,beta)
+        if (finish) then
+            iflag = 0
+            return
+        end if
     end if
 
-    !     main iteration loop
-    !
-    8 iter= iter+1
+    if (iflag .eq. 0) then
+        ! initialize
+        !
+        ! im =   number of times betapr was negative for method 2 or
+        !        number of times betapr was 0 for method 3
+        !eps
+        ! ndes = number of line search iterations after wolfe conditions
+        !        were satisfied
+        iter= 0
+        if (n.le.0) then
+            iflag = -3
+            write (*,140)
+        end if
+        nfun= 1
+        new=.true.
+        nrst= 0
+        im=0
+        ndes=0
 
-    ! when nrst>n and irest=1 then restart
-    !
-    nrst= nrst+1
-    info=0
+        do i = 1, n
+            d(i) = - g(i)
+        end do
 
-    !  call the line search routine of mor'e and thuente
-    !  (modified for our cg method)
-    !
-    !  Jorge More, David Thuente,
-    !  Linesearch Algorithms with Guaranteed Sufficient Decrease,
-    !  ACM Transactions on Mathematical Software,
-    !  Volume 20, Number 3, September 1994, pages 286-307.
-    !
-    nfev=0
+        gnorm = sqrt(dot_product(g,g))
+        stp1= one/gnorm
 
-    do i = 1, n
-        gold(i) = g(i)
-    end do
+        ! parameters for line search routine
+        !
+        ! ftol and gtol are nonnegative input variables. termination
+        !   occurs when the sufficient decrease condition and the
+        !   directional derivative condition are satisfied.
+        !
+        ! xtol is a nonnegative input variable. termination occurs
+        !   when the relative width of the interval of uncertainty
+        !   is at most xtol.
+        !
+        ! stpmin and stpmax are nonnegative input variables which
+        !   specify lower and upper bounds for the step.
+        !
+        ! maxfev is a positive integer input variable. termination
+        !   occurs when the number of calls to fcn is at least
+        !   maxfev by the end of an iteration.
+        ftol= 1.0d-4
+        gtol= 1.0d-1
+        if (gtol.le.1.d-04) then
+            write(*,145)
+            gtol=1.d-02
+        end if
+        xtol= 1.0d-17
+        stpmin= 1.0d-20
+        stpmax= 1.0d+20
+        maxfev= 40
 
-    dg = dot_product(d,g)
-    dgold = dg
-    stp = one
+        if (iprint(1).ge.0) then
+            call cgbd(iprint,iter,nfun,gnorm,n,x,f,g,stp,finish,ndes,im,betafr,betapr,beta)
+        end if
+    end if
 
-    ! shanno-phua's formula for trial step
+    if (iflag .eq. 0 .or. iflag .eq. 2) then
+        !     main iteration loop
+        !
+        iter= iter+1
 
-    if (.not.new) stp = dg0/dg
-    if (iter.eq.1) stp = stp1
-    ides = 0
-    new = .false.
-    72  continue
+        ! when nrst>n and irest=1 then restart
+        !
+        nrst= nrst+1
+        info=0
+
+        !  call the line search routine of mor'e and thuente
+        !  (modified for our cg method)
+        !
+        !  Jorge More, David Thuente,
+        !  Linesearch Algorithms with Guaranteed Sufficient Decrease,
+        !  ACM Transactions on Mathematical Software,
+        !  Volume 20, Number 3, September 1994, pages 286-307.
+        !
+        nfev=0
+
+        do i = 1, n
+            gold(i) = g(i)
+        end do
+
+        dg = dot_product(d,g)
+        dgold = dg
+        stp = one
+
+        ! shanno-phua's formula for trial step
+        if (.not.new) stp = dg0/dg
+        if (iter.eq.1) stp = stp1
+        ides = 0
+        new = .false.
+    end if
+72  continue
 
     ! write(6,*) 'step= ', stp
 
@@ -299,7 +310,6 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     !             there may not be a step which satisfies the
     !             sufficient decrease and curvature conditions.
     !             tolerances may be too small.
-
     if (info .eq. -1) then
         ! return to fetch function and gradient
         iflag=1
@@ -307,7 +317,9 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     end if
 
     if (info .ne. 1) then
-        go to 90
+        iflag=-1
+        write(*,100) info
+        return
     end if
 
     ! test if descent direction is obtained for methods 2 and 3
@@ -328,7 +340,11 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
         if (dg1.lt. 0.0d0) go to 75
         if (iprint(1).ge.0) write(6,*) 'no descent'
         ides = ides + 1
-        if (ides.gt.5) go to 95
+        if (ides.gt.5) then
+            iflag=-2
+            write(*,135) i
+            return
+        end if
         go to 72
     end if
 
@@ -340,7 +356,7 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     ! ndes = number of line search iterations after wolfe conditions
     !        were satisfied
     !
-   75  nfun = nfun + nfev
+75  nfun = nfun + nfev
     ndes = ndes + ides
     betafr = gg / gnorm**2
 
@@ -363,40 +379,15 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     ! return to driver for termination test
     gnorm = sqrt(dot_product(g,g))
     iflag=2
-    return
-
-  80  continue
-
-    ! call subroutine for printing output
-    if (iprint(1).ge.0) then
-        call cgbd(iprint,iter,nfun,gnorm,n,x,f,g,stp,finish,ndes,im,betafr,betapr,beta)
-    end if
-
-    if (finish) then
-        iflag = 0
-        return
-    end if
-
-    go to 8
-
-!     end of main iteration loop. error exits.
-  90 iflag=-1
-     write(*,100) info
-     return
-  95 iflag=-2
-     write(*,135) i
-     return
-  96 iflag= -3
-     write(*,140)
 
     ! formats
     ! -------
- 100 format(/' iflag= -1 ',/' line search failed. see documentation of routine cvsmod'&
+100 format(/' iflag= -1 ',/' line search failed. see documentation of routine cvsmod'&
         & ,/' error return of line search: info= ',i2,/&
         & ' possible cause: function or gradient are incorrect')
- 135 format(/' iflag= -2',/' descent was not obtained')
- 140 format(/' iflag= -3',/' improper input parameters (n is not positive)')
- 145 format(/'  gtol is less than or equal to 1.d-04', / ' it has been reset to 1.d-02')
+135 format(/' iflag= -2',/' descent was not obtained')
+140 format(/' iflag= -3',/' improper input parameters (n is not positive)')
+145 format(/'  gtol is less than or equal to 1.d-04', / ' it has been reset to 1.d-02')
 end subroutine cgfam
 
 subroutine cstepm(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax, info)
@@ -580,6 +571,7 @@ subroutine cstepm(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax,
             stpf = stpmin
         end if
     end if
+
     ! update the interval of uncertainty. this update does not
     ! depend on the new step or the case analysis above.
     if (fp .gt. fx) then
@@ -596,6 +588,7 @@ subroutine cstepm(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax,
         fx = fp
         dx = dp
     end if
+
     ! compute the new step and safeguard it.
     stpf = min(stpmax,stpf)
     stpf = max(stpmin,stpf)
