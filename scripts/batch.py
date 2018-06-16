@@ -7,6 +7,8 @@ from os import chdir
 
 chdir('../')
 
+check_output(['rm', '-f', '*.txt'])
+
 # Run for each precision
 results = []
 for j in range(8,53):
@@ -23,6 +25,6 @@ for j in range(8,53):
 
     cost, iters = tuple(float(f) for f in check_output(['./main']).split())
     results.append([cost, iters])
-    print((cost, iters))
+    print((j, cost, iters))
 
 savez('scripts/incr_4dvar_performance_scaling.npz', results)

@@ -9,18 +9,19 @@ program lorenz96_4dvar
     use lorenz96, only: run_model
     use utils, only: time_seed, randn
     use minimisation, only: minimise
-    use io, only: output
+    use io, only: output, input
     use rp_emulator
 
     implicit none
 
-    real(dp), dimension(n_x,tstep) :: truth = 0.0_dp
+    real(dp), dimension(n_x,tstep) :: truth
     real(dp), dimension(n_x,tstep) :: guess_traj
     real(dp), dimension(n_x,tstep/freq) :: obs, innov
     real(dp), dimension(n_x) :: initial, initial_del, final_del
     real(dp) :: time(tstep)
     real(dp) :: diagn(1,out_iter*max_iterations) = -1.0_dp, diagn_inner(1,max_iterations)
     integer :: i, j, num_iters = 1, num_iters_inner
+    logical :: files_exist(3)
 
     !==========================================================================
     ! Setup
@@ -40,41 +41,52 @@ program lorenz96_4dvar
     time = (/ (real(i)*h, i = 0, tstep-1) /)
 
     !==========================================================================
-    ! Generate truth and observations
+    ! Generate truth and observations and initial guess
     !==========================================================================
     
-    ! Spin up truth
-    truth(:,1) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
-    do i = 1, spin_up
-        truth(:,:1) = run_model(1, truth(:,1))
-    end do
+    ! If all of the files already exist, use them for the truth, observations and first guess
+    inquire(file="truth.txt", exist=files_exist(1))
+    inquire(file="obs.txt", exist=files_exist(2))
+    inquire(file="first_guess.txt", exist=files_exist(3))
+    if (all(files_exist)) then
+        call input(truth, "truth.txt")
+        call input(obs, "obs.txt")
+        call input(guess_traj, "first_guess.txt")
+    ! Else create them all from scratch
+    else
+        ! Spin up truth
+        truth(:,1) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
+        do i = 1, spin_up
+            truth(:,:1) = run_model(1, truth(:,1))
+        end do
 
-    ! Run truth
-    truth = run_model(tstep, truth(:,1))
+        ! Run truth
+        truth = run_model(tstep, truth(:,1))
 
-    ! Calculate observations
+        ! Calculate observations
+        do i = 1, tstep, freq
+            do j = 1, n_x
+                obs(j, 1+i/freq) = randn(truth(j,i), sqrt(obs_var))
+            end do
+        end do
+
+        ! Output truth and observations
+        call output(time, truth, "truth.txt")
+        call output(time, obs, "obs.txt", freq)
+
+        ! Set initial best guess
+        initial = (/ (truth(i,1) + randn(0.0_dp, init_err), i = 1, n_x ) /)
+
+        ! Output first guess
+        guess_traj = run_model(tstep, initial)
+        call output(time, guess_traj, "first_guess.txt")
+    end if
+
+    ! Store the time index of the last observation
     do i = 1, tstep, freq
         last = i
-        do j = 1, n_x
-            obs(j, 1+i/freq) = randn(truth(j,i), sqrt(obs_var))
-        end do
     end do
 
-    ! Output truth and observations
-    call output(time, truth, "truth.txt")
-    call output(time, obs, "obs.txt", freq)
-
-    !==========================================================================
-    ! Set initial guess
-    !==========================================================================
-
-    ! Set initial best guess
-    initial = (/ (truth(i,1) + randn(0.0_dp, init_err), i = 1, n_x ) /)
-
-    ! Output first guess
-    guess_traj = run_model(tstep, initial)
-    call output(time, guess_traj, "first_guess.txt")
-    
     !==========================================================================
     ! Perform minimisation
     !==========================================================================
@@ -119,6 +131,7 @@ program lorenz96_4dvar
     ! Output diagnostics
     call output((/ (real(i,dp), i = 1, size(diagn(1,:)) ) /), diagn, "diagnostics.txt")
 
-    write (*,'(A5,I5,A11)') 'Took ', num_iters-1, ' iterations'
-    write (*,'(A11,F9.2)') 'Final cost ', diagn(1,num_iters-1)
+    ! write (*,'(A5,I5,A11)') 'Took ', num_iters-1, ' iterations'
+    ! write (*,'(A11,F9.2)') 'Final cost ', diagn(1,num_iters-1)
+    print *, diagn(1,num_iters-1), num_iters
 end program lorenz96_4dvar
