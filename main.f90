@@ -131,7 +131,6 @@ program lorenz96_4dvar
     ! Output diagnostics
     call output((/ (real(i,dp), i = 1, size(diagn(1,:)) ) /), diagn, "diagnostics.txt")
 
-    ! write (*,'(A5,I5,A11)') 'Took ', num_iters-1, ' iterations'
-    ! write (*,'(A11,F9.2)') 'Final cost ', diagn(1,num_iters-1)
-    print *, diagn(1,num_iters-1), num_iters
+    write (*,'(A5,I5,A11)') 'Took ', num_iters-1, ' iterations'
+    write (*,'(A11,F9.2)') 'Final cost ', diagn(1,num_iters-1)
 end program lorenz96_4dvar
