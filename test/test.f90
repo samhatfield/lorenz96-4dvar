@@ -55,8 +55,8 @@ contains
 
     subroutine test_adj
         integer, parameter :: nsteps = 10
-        real(dp), dimension(n_x) :: pert, initial_hat
-        real(dp), dimension(n_x,nsteps) :: traj, pert_traj
+        real(dp), dimension(n_x) :: pert_1, pert_2, adj_traj
+        real(dp), dimension(n_x,nsteps) :: traj, fwd_traj
         real(dp) :: forward_product, adjoint_product
         integer :: i
 
@@ -64,22 +64,29 @@ contains
         print *, '============================================================'
         print *, 'Adjoint model test'
         print *, '============================================================'
-        print *, 'The inner product of the final perturbation with itself '
-        print *, 'should equal the inner product of the initial perturbation '
-        print *, 'with the initial perturbation put through the tangent '
-        print *, 'and adjoint models.'
-        print *, '<Mdx, Mdx> = <dx, M^TMdx>'
+        print *, 'The inner product of the integration of the first'
+        print *, 'perturbation with the second perturbation should equal the'
+        print *, 'inner product of the first perturbation with the second'
+        print *, 'perturbation put through the adjoint model.'
+        print *, '<Mdx, dy> = <dx, M^Tdyz>'
         print *, '============================================================'
 
         ! Generate random unit vector
-        call random_number(pert)
+        call random_number(pert_1)
+        call random_number(pert_2)
 
+        ! Get nonlinear trajectory
         traj = run_model(nsteps, (/ (1.0_dp, i = 1, n_x) /))
-        pert_traj = run_tangent_linear(nsteps, traj, pert)
-        initial_hat = run_adjoint(nsteps, traj, pert_traj(:,nsteps))
+        
+        ! Compute tangent linear evolution of first perturbation
+        fwd_traj = run_tangent_linear(nsteps, traj, pert_1)
+        
+        ! Compute adjoint evolution of second perturbation
+        adj_traj = run_adjoint(nsteps, traj, pert_2)
 
-        forward_product = sum(pert_traj(:,nsteps)**2)
-        adjoint_product = sum(pert*initial_hat)
+        ! Compute LHS and RHS of above identity
+        forward_product = dot_product(fwd_traj(:,nsteps), pert_2)
+        adjoint_product = dot_product(pert_1, adj_traj)
 
         write (*, '(3A20)') 'Forward product', 'Adjoint product', 'Difference'
         write (*,'(3F20.16)') forward_product, adjoint_product, forward_product - adjoint_product
