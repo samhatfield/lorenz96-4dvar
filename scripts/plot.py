@@ -11,10 +11,10 @@ display_vars = [3, 13, 25, 35]
 f, axarr = plt.subplots(len(display_vars), sharex=True, figsize=(4,6))
 
 # Load all data
-truth = loadtxt('truth.txt')
-obs = loadtxt('obs.txt')
-first_guess = loadtxt('first_guess.txt')
-final_guess = loadtxt('final_guess.txt')
+truth = loadtxt('../truth.txt')
+obs = loadtxt('../obs.txt')
+first_guess = loadtxt('../first_guess.txt')
+final_guess = loadtxt('../final_guess.txt')
 
 # Plot all data
 for i, var in enumerate(display_vars):
@@ -31,10 +31,10 @@ plt.savefig('vars.pdf', bbox_extra_artists=(leg,), bbox_inches='tight')
 
 # Plot diagnostics
 plt.figure(figsize=(6,3))
-diagn = loadtxt('diagnostics.txt')
+diagn = loadtxt('../diagnostics.txt')
 length = where(diagn<=0)[0]
 length = diagn.shape[0] if len(length) == 0 else length[0]
-plt.semilogy(diagn[:length-1,0], diagn[:length-1,1])
+plt.plot(diagn[:length-1,0], diagn[:length-1,1])
 plt.xlabel('Iterations')
 plt.ylabel('Cost function')
 
