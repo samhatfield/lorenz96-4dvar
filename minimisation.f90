@@ -28,7 +28,8 @@ contains
         real(dp), intent(in) :: initial_del(n_x), innov(n_x,tstep/freq), guess_traj(n_x,tstep)
         real(dp), intent(inout) :: del(n_x), diagn(1,max_iterations)
         real(dp) :: cost, grad(n_x)
-        integer :: iters, i
+        integer :: i, iter
+        common /runinf/iter
 
         ! Dummy variables for conjugate gradient algorithm
         real(dp) :: d(n_x), grad_old(n_x), w(n_x)
@@ -43,7 +44,6 @@ contains
         ! Initialise minimisation parameters
         flag = 0
         rest = 0
-        iters = 1
         finish = .false.
         del = initial_del
         diagn = -1.0_dp
@@ -52,7 +52,15 @@ contains
             ! Compute cost of current best guess
             if (flag == 0 .or. flag == 1) then
                 cost = calc_cost(tstep, guess_traj, del, innov)
-                diagn(1,iters) = cost
+
+                ! Save cost in diagnostics array
+                if (.not. all(grad == grad_old)) then
+                    if (flag == 0) then
+                        diagn(1,1) = cost
+                    else
+                        diagn(1,iter+1) = cost
+                    end if
+                end if
         
                 ! Compute gradient of cost function
                 grad = calc_cost_grad(tstep, guess_traj, del, innov)
@@ -60,10 +68,9 @@ contains
     
             ! Use gradient descent algorithm to step towards minimum of cost function
             call cgfam(n_x, del, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
-            if (flag <= 0 .or. iters >= max_iterations) exit
-            if (flag == 1) iters = iters + 1
+            if (flag <= 0 .or. iter >= max_iterations) exit
             if (flag == 2) then
-                if (maxval(abs(grad)) <= 0.2_dp) then
+                if (maxval(abs(grad)) <= 1.0_dp) then
                     finish = .true.
                 end if
             end if
