@@ -100,7 +100,7 @@ subroutine cgbd(iprint, iter, nfun, gnorm, n, x, f, g, stp,finish, ndes, im, bet
 100 FORMAT(/' SUCCESSFUL CONVERGENCE (NO ERRORS).',/,' IFLAG = 0')
 end subroutine  cgbd
 
-subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, finish)
+subroutine cgfam(n, x, f, grad, srch_dir, gold, iprint, eps, w, iflag, irest, method, finish)
     ! CGFAM implements conjugate gradient methods for unconstrained nonlinear optimization.
     !
     !  Modified:
@@ -124,7 +124,7 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     !
     !     x      =  iterate
     !     f      =  function value
-    !     g      =  gradient value
+    !     grad   =  gradient value
     !     gold   =  previous gradient value
     !
     !    input, integer iprint(2), controls printing.
@@ -164,10 +164,10 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
 
     integer n
 
-    double precision d(n)
+    double precision srch_dir(n)
     double precision eps
     double precision f
-    double precision g(n)
+    double precision grad(n)
     double precision gold(n)
     double precision w(n)
     double precision x(n)
@@ -189,7 +189,7 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     if (iflag.eq.2) then
         ! call subroutine for printing output
         if (iprint(1).ge.0) then
-            call cgbd(iprint,iter,nfun,gnorm,n,x,f,g,stp,finish,ndes,im,betafr,betapr,beta)
+            call cgbd(iprint,iter,nfun,gnorm,n,x,f,grad,stp,finish,ndes,im,betafr,betapr,beta)
         end if
 
         if (finish) then
@@ -217,11 +217,10 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
         im=0
         ndes=0
 
-        do i = 1, n
-            d(i) = - g(i)
-        end do
+        ! Set first search direction
+        srch_dir = -grad
 
-        gnorm = sqrt(dot_product(g,g))
+        gnorm = norm2(grad)
         stp1= one/gnorm
 
         ! parameters for line search routine
@@ -252,7 +251,7 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
         maxfev= 40
 
         if (iprint(1).ge.0) then
-            call cgbd(iprint,iter,nfun,gnorm,n,x,f,g,stp,finish,ndes,im,betafr,betapr,beta)
+            call cgbd(iprint,iter,nfun,gnorm,n,x,f,grad,stp,finish,ndes,im,betafr,betapr,beta)
         end if
     end if
 
@@ -276,11 +275,9 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
         !
         nfev=0
 
-        do i = 1, n
-            gold(i) = g(i)
-        end do
+        gold = grad
 
-        dg = dot_product(d,g)
+        dg = dot_product(srch_dir,grad)
         dgold = dg
         stp = one
 
@@ -292,10 +289,8 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     end if
 72  continue
 
-    ! write(6,*) 'step= ', stp
-
     ! call to the line search subroutine
-    call cvsmod(n,x,f,g,d,stp,ftol,gtol,xtol,stpmin,stpmax,maxfev,info,nfev,w,dg,dgout)
+    call cvsmod(n,x,f,grad,srch_dir,stp,ftol,gtol,xtol,stpmin,stpmax,maxfev,info,nfev,w,dg,dgout)
     ! info is an integer output variable set as follows:
     !   info = 0  improper input parameters.
     !   info =-1  a return is made to compute the function and gradient.
@@ -323,29 +318,27 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     end if
 
     ! test if descent direction is obtained for methods 2 and 3
-    gg = dot_product(g,g)
-    gg0 = dot_product(g,gold)
+    gg = dot_product(grad,grad)
+    gg0 = dot_product(grad,gold)
     betapr = (gg - gg0) / gnorm**2
 
     if (irest.eq.1.and.nrst.gt.n) then
         nrst=0
         new=.true.
-        go to 75
-    end if
-
-    if (method.eq.1) then
-        go to 75
     else
-        dg1 = -gg + betapr*dgout
-        if (dg1.lt. 0.0d0) go to 75
-        if (iprint(1).ge.0) write(6,*) 'no descent'
-        ides = ides + 1
-        if (ides.gt.5) then
-            iflag=-2
-            write(*,135) i
-            return
+        if (method.ne.1) then
+            dg1 = -gg + betapr*dgout
+            if (dg1.ge. 0.0d0) then
+                if (iprint(1).ge.0) write(6,*) 'no descent'
+                ides = ides + 1
+                if (ides.gt.5) then
+                    iflag=-2
+                    write(*,135) i
+                    return
+                end if
+                go to 72
+            end if
         end if
-        go to 72
     end if
 
     ! determine correct beta value for method chosen
@@ -356,7 +349,7 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     ! ndes = number of line search iterations after wolfe conditions
     !        were satisfied
     !
-75  nfun = nfun + nfev
+    nfun = nfun + nfev
     ndes = ndes + ides
     betafr = gg / gnorm**2
 
@@ -370,14 +363,11 @@ subroutine cgfam(n, x, f, g, d, gold, iprint, eps, w, iflag, irest, method, fini
     end if
 
     !  Compute the new direction.
-    do i = 1, n
-        d(i) = - g(i) + beta * d(i)
-    end do
-
+    srch_dir = -grad + beta*srch_dir
     dg0= dgold * stp
 
     ! return to driver for termination test
-    gnorm = sqrt(dot_product(g,g))
+    gnorm = norm2(grad)
     iflag=2
 
     ! formats
