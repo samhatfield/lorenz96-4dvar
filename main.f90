@@ -52,8 +52,11 @@ program lorenz96_4dvar
         call input(truth, "truth.txt")
         call input(obs, "obs.txt")
         call input(guess_traj, "first_guess.txt")
+
+        initial = guess_traj(:,1)
     ! Else create them all from scratch
     else
+        RPE_ACTIVE = .false.
         ! Spin up truth
         truth(:,1) = (/ (randn(0.0_dp, 5.0_dp), i = 1, n_x) /)
         do i = 1, spin_up
@@ -80,6 +83,7 @@ program lorenz96_4dvar
         ! Output first guess
         guess_traj = run_model(tstep, initial)
         call output(time, guess_traj, "first_guess.txt")
+        RPE_ACTIVE = .true.
     end if
 
     ! Store the time index of the last observation
