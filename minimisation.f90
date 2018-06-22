@@ -53,15 +53,8 @@ contains
             if (flag == 0 .or. flag == 1) then
                 cost = calc_cost(tstep, guess_traj, del, innov)
 
-                ! Save cost in diagnostics array
-                if (.not. all(grad == grad_old)) then
-                    if (flag == 0) then
-                        diagn(1,1) = cost
-                    else
-                        diagn(1,iter+1) = cost
-                    end if
-                end if
-        
+                if (flag == 0) diagn(1,1) = cost
+
                 ! Compute gradient of cost function
                 grad = calc_cost_grad(tstep, guess_traj, del, innov)
             end if
@@ -70,6 +63,8 @@ contains
             call cgfam(n_x, del, cost, grad, d, grad_old, printflags, eps, w, flag, rest, method, finish)
             if (flag <= 0 .or. iter >= max_iterations) exit
             if (flag == 2) then
+                ! Save cost in diagnostics array
+                diagn(1,iter+1) = cost
                 if (maxval(abs(grad)) <= 1.0_dp) then
                     finish = .true.
                 end if
